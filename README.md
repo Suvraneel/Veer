@@ -224,7 +224,7 @@ The Swift tests cover the app's pure logic in `RadletKit`: wheel hit-testing for
 
 ### Sharing a build
 
-`mac/scripts/build-app.sh` makes `dist/Radlet.app` (ad-hoc signed). `mac/scripts/make-dmg.sh` packs `dist/Radlet-<version>.dmg`, a zip and their SHA-256 checksums. The disk image opens on a styled window (drag Radlet onto Applications) laid out by [dmgbuild](https://github.com/dmgbuild/dmgbuild), which the script installs into `target/dmgbuild` the first time; without Python 3 or a network it makes a plain image instead. Its background is in `mac/dmg`, and the app icon is `mac/Resources/AppIcon.icns`. Set `UNIVERSAL=1` for Apple silicon and Intel, `VERSION=0.3.0` to stamp a version, and `SKIP_PDFIUM=1` to leave out PDF to image. The build downloads a pinned PDFium once into `target/pdfium`.
+`mac/scripts/build-app.sh` makes `dist/Radlet.app` (ad-hoc signed). `mac/scripts/make-dmg.sh` packs `dist/Radlet-<version>.dmg`, a zip and their SHA-256 checksums. The disk image opens on a styled window (drag Radlet onto Applications) laid out by [dmgbuild](https://github.com/dmgbuild/dmgbuild), which the script installs into `target/dmgbuild` the first time; without Python 3 or a network it makes a plain image instead. Its background is in `mac/dmg`, and the app icon is `mac/Resources/AppIcon.icns`. Set `UNIVERSAL=1` for Apple silicon and Intel, `VERSION=0.4.0` to stamp a version, and `SKIP_PDFIUM=1` to leave out PDF to image. The build downloads a pinned PDFium once into `target/pdfium`.
 
 Unless they're signed with a Developer ID and notarized, whoever opens one has to allow it once ([docs/release-notes.md](docs/release-notes.md) has the steps). With a certificate, `SIGN_IDENTITY="Developer ID Application: …" mac/scripts/make-dmg.sh` signs the app, its helpers, Sparkle and the disk image with the hardened runtime, and `mac/scripts/notarize.sh` notarizes and staples them (with an App Store Connect API key, or a `notarytool` keychain profile).
 
@@ -233,11 +233,11 @@ Unless they're signed with a Developer ID and notarized, whoever opens one has t
 Releases come from version tags. Bump `version` in `Cargo.toml` (and run `cargo build`, so `Cargo.lock` follows), merge it, then tag that commit on `main`:
 
 ```sh
-git tag v0.3.0
-git push origin v0.3.0
+git tag v0.4.0
+git push origin v0.4.0
 ```
 
-[The release workflow](.github/workflows/release.yml) builds the app for Apple silicon and Intel, checks every binary and the bundled helpers, and publishes the `.dmg`, zip and checksums on the Releases page, with [docs/release-notes.md](docs/release-notes.md) above GitHub's list of what changed. It stops early if the tag doesn't match `Cargo.toml`. A tag with a hyphen, such as `v0.3.0-beta.1`, becomes a prerelease. Re-running the workflow replaces a release's files, and publishes the release again if deleting and re-pushing its tag turned it into a draft.
+[The release workflow](.github/workflows/release.yml) builds the app for Apple silicon and Intel, checks every binary and the bundled helpers, and publishes the `.dmg`, zip and checksums on the Releases page, with [docs/release-notes.md](docs/release-notes.md) above GitHub's list of what changed. It stops early if the tag doesn't match `Cargo.toml`. A tag with a hyphen, such as `v0.4.0-beta.1`, becomes a prerelease. Re-running the workflow replaces a release's files, and publishes the release again if deleting and re-pushing its tag turned it into a draft.
 
 **Updates (once).** Run `mac/scripts/setup-updates.sh` on your Mac and commit `mac/Resources/Info.plist`. It makes an EdDSA key in your login keychain, writes its public half into Info.plist and stores the private half as the `SPARKLE_ED_PRIVATE_KEY` secret with `gh`. From then on every release also carries an `appcast.xml`, signed for installed copies, and the workflow checks the signature against the app's key before publishing. Copies from before the key was added don't update themselves; they need one manual download.
 
@@ -482,7 +482,7 @@ JSON, one object per line. Every request gets exactly one reply with the same `i
 
 ## Current status
 
-Version 0.3.0, working towards 1.0.
+Version 0.4.0, working towards 1.0.
 
 - **Releases come from tags.** Each `v*` tag builds a universal `.dmg` and publishes it on the Releases page, with an appcast for installed copies once the update key is set up. Until the Developer ID secrets are added, builds are ad-hoc signed and not notarized, so the first open needs **Open Anyway**.
 - **What CI checks.** On Linux: formatting, clippy, every engine test (including the end-to-end, protocol, FFmpeg and PDFium tests) and the licence policy. On macOS: the engine tests again, the Swift tests, a live protocol contract against the freshly built engine, the app bundle build, and a smoke test of the bundled helpers, including `radlet-vision selftest`.
@@ -532,6 +532,9 @@ Version 0.3.0, working towards 1.0.
 - [x] Your own shortcuts on the Control wheel.
 - [x] On-device Apple Intelligence: Describe, Summarize, names from what's in a file, and a loadout from a sentence.
 - [x] Every wheel tool for AI agents over MCP, except passwords and shortcuts.
+- [x] Developer tools: format JSON and XML, optimize SVGs, check syntax, data URIs, Base64 and more checksums.
+- [x] Spot files whose extension doesn't match what's inside, and fix them in one flick.
+- [x] Radlet's own FFmpeg build, for Macs without Homebrew.
 - [ ] Native Shortcuts actions (App Intents), in a release built with Xcode.
 
 ## License

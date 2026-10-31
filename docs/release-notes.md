@@ -1,14 +1,11 @@
 **Radlet is a weapon wheel for your files.** Drag files in Finder, hold a key, and flick to a tool: convert, compress, crop, translate and dozens more, all on your Mac.
 
-**New in 0.3.0:**
+**New in 0.4.0:**
 
-- **SVG drawings.** Convert any picture to SVG: it's traced into shapes that stay sharp at any size, in colour, black and white, Simple or Detailed.
-- **Sharing.** Share a loadout or a skin as a file or a `radlet://` link, and add ready-made ones from the [gallery](https://radlet.vercel.app/gallery/).
-- **Your shortcuts on the wheel.** Pick shortcuts from the Shortcuts app in Settings → Loadouts, and run them from the Control wheel.
-- **Apple Intelligence, on this Mac** (macOS 26): Describe a picture as alt text, Summarize a document, rename files by what's in them, and make a loadout from a sentence.
-- **A tidier Convert wheel.** Each kind of file shows the formats most people want; less known ones wait under More….
-- **Bloom keeps its presets out** for the whole drag, and overshooting one still lands on the wheel.
-- **AI agents** get the rest of the wheel's tools over MCP: combining documents and workbooks, QR codes, icon sets, folder tools, names, descriptions and summaries.
+- **Developer tools.** Format or minify JSON (with sorted keys if you like) and XML, optimize SVGs, check JSON, YAML, TOML, XML, SVG, CSV and TSV files ("Valid YAML", or the line and column of the first problem), copy a picture, SVG or font as a data URI, encode and decode Base64, and copy MD5, SHA-1 or SHA-512 checksums as well as SHA-256.
+- **Wrong extensions, spotted.** When a file's name doesn't match what's inside (a .png that's really a JPEG, an iPhone photo named .jpg that's HEIC, a download with no extension), **Rename to .jpg** comes first on the wheel. **Rename…** can also change extensions on purpose, with a reminder that renaming doesn't convert.
+- **FFmpeg without Homebrew.** When a job needs FFmpeg and Homebrew isn't installed, Radlet downloads its own build (about 55 MB, LGPL), checked before it's used.
+- **On the command line and for AI agents:** `radlet check` (which exits with an error when a file has a problem, for scripts and CI), `xml`, `optimize-svg`, `data-uri`, `base64`, `fix-extension`, `json --sort-keys` and `checksum --algorithm`, and the new tools over MCP.
 
 **Install:** download the `.dmg` below, open it and drag **Radlet** into **Applications**. Radlet runs on macOS 14 or later, on Apple silicon and Intel Macs.
 
