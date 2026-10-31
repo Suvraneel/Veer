@@ -533,6 +533,14 @@ enum Command {
         #[command(flatten)]
         run: RunArgs,
     },
+    /// Rename files whose extension doesn't match what they hold (a .png
+    /// that is really a JPEG), or that have none. Never overwrites.
+    FixExtension {
+        files: Vec<PathBuf>,
+        /// Only say what would change.
+        #[arg(long)]
+        dry_run: bool,
+    },
     /// Put files and folders, together, into one ZIP archive.
     Zip {
         #[command(flatten)]
@@ -689,6 +697,83 @@ enum Command {
     /// Run one unit of work from stdin (used for isolation).
     #[command(hide = true)]
     Worker,
+}
+
+/// The name `path` should have: its extension replaced by `ext`, or `ext`
+/// added when it has none.
+fn with_extension(path: &std::path::Path, ext: &str) -> PathBuf {
+    if path.extension().is_some() {
+        path.with_extension(ext)
+    } else {
+        let mut name = path.as_os_str().to_os_string();
+        name.push(".");
+        name.push(ext);
+        PathBuf::from(name)
+    }
+}
+
+/// Renames `from` to `to`, or "to 2.ext" and so on if that's taken,
+/// without ever replacing a file.
+fn rename_free(from: &std::path::Path, to: &std::path::Path) -> io::Result<PathBuf> {
+    let stem = to
+        .file_stem()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let ext = to.extension().map(|e| e.to_string_lossy().into_owned());
+    for n in 1..10_000 {
+        let name = match (n, &ext) {
+            (1, _) => to
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_default(),
+            (_, Some(e)) => format!("{stem} {n}.{e}"),
+            (_, None) => format!("{stem} {n}"),
+        };
+        let candidate = to.with_file_name(name);
+        // A hard link fails if the name is taken, so nothing is replaced.
+        match std::fs::hard_link(from, &candidate) {
+            Ok(()) => {
+                std::fs::remove_file(from)?;
+                return Ok(candidate);
+            }
+            Err(e) if e.kind() == io::ErrorKind::AlreadyExists => continue,
+            Err(_) if !candidate.exists() => {
+                std::fs::rename(from, &candidate)?;
+                return Ok(candidate);
+            }
+            Err(_) => continue,
+        }
+    }
+    Err(io::Error::other("no free name"))
+}
+
+fn fix_extensions(files: &[PathBuf], dry_run: bool) -> Result<ExitCode> {
+    let mut failed = false;
+    for path in files {
+        let name = file_name(path);
+        match format::suggested_extension(path) {
+            None => println!("{name}: fine as it is"),
+            Some(ext) => {
+                let target = with_extension(path, ext);
+                if dry_run {
+                    println!("{name} → {}", file_name(&target));
+                    continue;
+                }
+                match rename_free(path, &target) {
+                    Ok(done) => println!("✓ {name} → {}", file_name(&done)),
+                    Err(e) => {
+                        eprintln!("✗ {name}: {e}");
+                        failed = true;
+                    }
+                }
+            }
+        }
+    }
+    Ok(if failed {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    })
 }
 
 fn privacy(files: &[PathBuf], caps: &Capabilities, json_out: bool) -> Result<ExitCode> {
@@ -1340,6 +1425,7 @@ fn dispatch(cli: Cli) -> Result<ExitCode> {
         Command::Check { run: r } => run(&r, Action::CheckSyntax, json_out),
         Command::DataUri { run: r } => run(&r, Action::DataUri, json_out),
         Command::Base64 { run: r } => run(&r, Action::Base64, json_out),
+        Command::FixExtension { files, dry_run } => fix_extensions(&files, dry_run),
         Command::Zip { run: r, password } => {
             let action = match password {
                 Some(p) => Action::ZipLocked { password: p.into() },

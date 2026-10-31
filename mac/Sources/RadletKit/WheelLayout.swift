@@ -74,12 +74,49 @@ public enum WheelLayout {
 
     /// Adds app-side tools to the engine's list, just before "Copy
     /// SHA-256", which stays last (folders have no checksum: then at the
-    /// end).
-    public static func withAppTools(_ tools: [Slot], files: [URL] = []) -> [Slot] {
+    /// end). Files named for something they aren't get "Rename to .jpg"
+    /// first, where it's quickest to reach.
+    public static func withAppTools(_ tools: [Slot], files: [URL] = [], fixes: [String: String] = [:]) -> [Slot] {
         guard !tools.contains(where: { $0.id == renameSlot.id }) else { return tools }
         var out = tools
         let at = out.firstIndex { $0.id == "checksum" } ?? out.endIndex
         out.insert(contentsOf: appTools(for: files), at: at)
+        if let fix = ExtensionFix.slot(for: files, fixes: fixes) { out.insert(fix, at: 0) }
         return out
+    }
+}
+
+/// Files whose names don't match what they hold (a .png that is really a
+/// JPEG, or a download with no extension), renamed to the extension the
+/// engine found. Offered only when every selected file needs one.
+public enum ExtensionFix {
+    public static let kind = "app_fix_extension"
+
+    /// "photo.png" with "jpg" becomes "photo.jpg"; "scan" becomes "scan.jpg".
+    public static func target(_ url: URL, ext: String) -> URL {
+        url.pathExtension.isEmpty ? url.appendingPathExtension(ext)
+            : url.deletingPathExtension().appendingPathExtension(ext)
+    }
+
+    /// The slot for `files`, given the engine's fixes by path.
+    public static func slot(for files: [URL], fixes: [String: String]) -> Slot? {
+        guard !files.isEmpty else { return nil }
+        var map: [String: JSONValue] = [:]
+        for f in files {
+            guard let ext = fixes[f.path] else { return nil }
+            map[f.path] = .string(ext)
+        }
+        let exts = Set(map.values.compactMap(\.string))
+        let label = exts.count == 1 ? "Rename to .\(exts.first!)" : "Fix extensions"
+        return Slot(id: "fix_extension", label: label, symbol: "wand.and.stars", group: "tool",
+                    action: .object(["kind": .string(kind), "extensions": .object(map)]))
+    }
+
+    /// The renames a slot asks for, for those of `files` it covers.
+    public static func changes(_ slot: Slot, files: [URL]) -> [RenamePlan.Change] {
+        guard slot.action["kind"]?.string == kind, case .object(let map)? = slot.action["extensions"] else { return [] }
+        return files.compactMap { url in
+            map[url.path]?.string.map { RenamePlan.Change(from: url, to: target(url, ext: $0)) }
+        }
     }
 }

@@ -85,6 +85,56 @@ final class DeveloperToolTests: XCTestCase {
     }
 }
 
+final class ExtensionTests: XCTestCase {
+    private func names(_ files: [String], _ rule: RenamePlan.ExtensionRule, taken: Set<String> = []) -> [String] {
+        let inputs = files.map { RenamePlan.Input(url: URL(fileURLWithPath: "/d/\($0)"), date: nil) }
+        let result = RenamePlan.make(inputs, pattern: "{name}", extensionRule: rule,
+                                     exists: { taken.contains($0.lastPathComponent) })
+        guard case .success(let changes) = result else { return [] }
+        return changes.map(\.to.lastPathComponent)
+    }
+
+    func testRenameKeepsTheExtensionUnlessAsked() {
+        XCTAssertEqual(names(["a.JPG", "b.png"], .keep), [])
+        XCTAssertEqual(names(["a.JPG", "b.png"], .lowercase), ["a.jpg"])
+        XCTAssertEqual(names(["c.yml", "d"], .custom(".yaml")), ["c.yaml", "d.yaml"])
+        XCTAssertEqual(names(["e.tar"], .custom("tar.gz")), ["e.tar.gz"])
+        // Never over another file.
+        XCTAssertEqual(names(["f.png"], .custom("jpg"), taken: ["f.jpg"]), ["f 2.jpg"])
+        let inputs = [RenamePlan.Input(url: URL(fileURLWithPath: "/d/g.png"), date: nil)]
+        XCTAssertEqual(RenamePlan.make(inputs, pattern: "{name}", extensionRule: .custom("  "), exists: { _ in false }),
+                       .failure(.emptyExtension))
+        XCTAssertEqual(RenamePlan.make(inputs, pattern: "{name}", extensionRule: .custom("j pg"), exists: { _ in false }),
+                       .failure(.badExtension("j pg")))
+    }
+
+    func testANewKindOfExtensionComesWithAWarning() {
+        let png = [URL(fileURLWithPath: "/d/x.png")]
+        XCTAssertNotNil(RenamePlan.extensionWarning(png, rule: .custom("jpg")))
+        XCTAssertNil(RenamePlan.extensionWarning([URL(fileURLWithPath: "/d/x.jpeg")], rule: .custom("JPG")))
+        XCTAssertNil(RenamePlan.extensionWarning([URL(fileURLWithPath: "/d/notes.txt")], rule: .custom("md")))
+        XCTAssertNil(RenamePlan.extensionWarning(png, rule: .lowercase))
+        XCTAssertNil(RenamePlan.extensionWarning([URL(fileURLWithPath: "/d/download")], rule: .custom("pdf")))
+    }
+
+    func testWrongExtensionsGetASlotOfTheirOwn() throws {
+        let a = URL(fileURLWithPath: "/d/photo.png"), b = URL(fileURLWithPath: "/d/scan")
+        XCTAssertNil(ExtensionFix.slot(for: [a, b], fixes: [a.path: "jpg"]), "only when every file needs one")
+        let one = try XCTUnwrap(ExtensionFix.slot(for: [a, b], fixes: [a.path: "jpg", b.path: "jpg"]))
+        XCTAssertEqual(one.label, "Rename to .jpg")
+        XCTAssertEqual(ExtensionFix.slot(for: [a, b], fixes: [a.path: "jpg", b.path: "pdf"])?.label, "Fix extensions")
+        XCTAssertEqual(ExtensionFix.changes(one, files: [a, b]).map(\.to.lastPathComponent), ["photo.jpg", "scan.jpg"])
+        // It goes first on the wheel, where it's quickest to reach.
+        let tools = WheelLayout.withAppTools([], files: [a], fixes: [a.path: "jpg"])
+        XCTAssertEqual(tools.first?.id, "fix_extension")
+        XCTAssertFalse(WheelLayout.withAppTools([], files: [a]).contains { $0.id == "fix_extension" })
+        // The engine says which files need it.
+        let json = #"{"files":[{"path":"/d/photo.png","format":"jpeg","label":"JPEG","fix_extension":"jpg"}],"wheel":{"convert":[],"tools":[],"recipes":[]}}"#
+        let result = try JSONDecoder().decode(InspectResult.self, from: Data(json.utf8))
+        XCTAssertEqual(result.files.first?.fixExtension, "jpg")
+    }
+}
+
 final class WheelLayoutTests: XCTestCase {
     private func slots(_ n: Int) -> [Slot] {
         (0..<n).map { Slot(id: "s\($0)", label: "S\($0)", symbol: "circle", group: "tool", action: .null) }

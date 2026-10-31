@@ -351,6 +351,12 @@ final class AppState: ObservableObject {
     }
 
     func run(_ slot: Slot, files: [URL]) {
+        // Files named for something they aren't: renamed here, for Undo.
+        if slot.action["kind"]?.string == ExtensionFix.kind {
+            Usage.shared.record(slot)
+            fixExtensions(ExtensionFix.changes(slot, files: files))
+            return
+        }
         // Copy path, Copy name and Open in Terminal happen here and now.
         if let quick = QuickAction(slot: slot) {
             Usage.shared.record(slot)
@@ -525,6 +531,39 @@ final class AppState: ObservableObject {
             p.message = ([base] + extras).joined(separator: " · ")
         }
         hud.finish()
+    }
+
+    /// Renames files to the extensions the engine found for what they
+    /// hold, never over another file; recorded for Undo.
+    private func fixExtensions(_ changes: [RenamePlan.Change]) {
+        let fm = FileManager.default
+        var done: [HistoryEntry.Rename] = []
+        var failed: [String] = []
+        for c in changes {
+            let target = RenamePlan.freeName(c.to) { fm.fileExists(atPath: $0.path) }
+            do {
+                try fm.moveItem(at: c.from, to: target)
+                done.append(HistoryEntry.Rename(from: c.from.path, to: target.path))
+            } catch {
+                Log.app("fix extension: couldn't rename a file: \(Log.code(error))")
+                failed.append(c.from.lastPathComponent)
+            }
+        }
+        Log.app("fixed \(done.count) of \(changes.count) extensions")
+        guard !done.isEmpty else {
+            notify("Couldn't rename", detail: failed.isEmpty ? "Nothing to rename" : failed.joined(separator: ", "))
+            return
+        }
+        let title = done.count == 1
+            ? "Renamed to \(URL(fileURLWithPath: done[0].to).lastPathComponent)"
+            : "Fixed \(done.count) extensions"
+        let id = HistoryStore.shared.record(title: title, outputs: [], renames: done)
+        let detail = failed.isEmpty ? "Undo puts the old names back"
+            : "\(failed.count) couldn't be renamed · Undo puts the old names back"
+        guard notify(title, detail: detail) else { return }
+        hud.progress.outputs = done.map { URL(fileURLWithPath: $0.to) }
+        hudEntry = id
+        hud.reposition()
     }
 
     /// Batch Rename renamed files in its window; record it for Undo.

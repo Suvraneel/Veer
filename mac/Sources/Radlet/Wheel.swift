@@ -232,6 +232,7 @@ final class WheelController {
         Log.wheel("shown: \(mode.title), \(model.style.title), \(describeFiles(files)), keyboard \(keyboard)")
         model.full = .empty
         model.files = files
+        model.fixes = [:]
         model.loading = true
         model.title = files.count == 1 ? files[0].lastPathComponent : "\(files.count) files"
         apply(mode)
@@ -264,6 +265,8 @@ final class WheelController {
                 let result = try await EngineClient.shared.inspect(files, recipesDir: self?.recipesDir())
                 guard let self, !Task.isCancelled else { return }
                 self.model.full = result.wheel
+                self.model.fixes = Dictionary(result.files.compactMap { f in f.fixExtension.map { (f.path, $0) } },
+                                              uniquingKeysWith: { a, _ in a })
                 self.model.loading = false
                 withAnimation(self.model.look.spring) { self.apply(self.model.mode) }
                 if keyboard, !self.model.positions.isEmpty { self.select(WheelPick(slot: 0), announce: true) }

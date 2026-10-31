@@ -514,6 +514,50 @@ pub fn detect(path: &Path) -> Result<Format> {
     }
 }
 
+/// The extension a file should have when its contents say it's something
+/// other than its name does (a "photo.png" that is really a JPEG), or its
+/// name has no extension at all. Only clear mistakes count: formats that
+/// share a container (MP4 and MOV, ZIP and Word, TIFF and camera RAW…)
+/// match each other, text formats aren't second-guessed, and an extension
+/// Radlet doesn't know is left alone.
+pub fn suggested_extension(path: &Path) -> Option<&'static str> {
+    let name = path.file_name()?.to_str()?;
+    if name.starts_with('.') || std::fs::metadata(path).ok()?.is_dir() {
+        return None;
+    }
+    let actual = detect(path).ok()?;
+    match Format::from_path(path) {
+        Some(named) if !same_kind(named, actual) => Some(actual.extension()),
+        Some(_) => None,
+        // No extension at all: what the contents are.
+        None if path.extension().is_none() => Some(actual.extension()),
+        None => None,
+    }
+}
+
+/// True when a file named as `a` but holding `b` is fine as it is.
+fn same_kind(a: Format, b: Format) -> bool {
+    const FAMILIES: &[&[Format]] = &[
+        &[Mp4, Mov, M4a],
+        &[Mkv, Webm],
+        &[Ogg, Opus],
+        &[Wmv, Wma],
+        &[Tiff, Raw],
+        &[Ttf, Otf],
+        &[Doc, Xls],
+        &[Zip, Docx, Xlsx, Pptx, Epub, Odt, Ods, Key, Pages, Numbers],
+    ];
+    let textual = |f: Format| {
+        matches!(
+            f.category(),
+            Category::Text | Category::Data | Category::Subtitle
+        ) || matches!(f, Svg | Rtf)
+    };
+    a == b
+        || (textual(a) && textual(b))
+        || FAMILIES.iter().any(|g| g.contains(&a) && g.contains(&b))
+}
+
 /// A ZIP container: a Word document, a plain archive, or something built
 /// on ZIP that Radlet doesn't handle (spreadsheets, slides, e-books, apps).
 fn classify_zip(path: &Path, by_ext: Option<Format>) -> Option<Format> {
@@ -825,6 +869,52 @@ pub(crate) fn display_name(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
+    use super::suggested_extension;
+
+    #[test]
+    fn mislabelled_files_get_the_extension_they_need() {
+        let dir = tempfile::tempdir().unwrap();
+        let put = |name: &str, bytes: &[u8]| {
+            let p = dir.path().join(name);
+            std::fs::write(&p, bytes).unwrap();
+            p
+        };
+        let jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 0, 0x10, b'J', b'F', b'I', b'F', 0];
+        let png = b"\x89PNG\r\n\x1a\n\0\0\0\rIHDR";
+        let mut heic = vec![0, 0, 0, 0x18];
+        heic.extend_from_slice(b"ftypheic\0\0\0\0mif1heic");
+        let mut mov = vec![0, 0, 0, 0x14];
+        mov.extend_from_slice(b"ftypqt  \0\0\0\0qt  ");
+        let webp = b"RIFF\x24\0\0\0WEBPVP8 ";
+
+        assert_eq!(suggested_extension(&put("photo.png", &jpeg)), Some("jpg"));
+        assert_eq!(suggested_extension(&put("IMG_1.jpg", &heic)), Some("heic"));
+        assert_eq!(
+            suggested_extension(&put("download.png", webp)),
+            Some("webp")
+        );
+        assert_eq!(
+            suggested_extension(&put("photo", &jpeg)),
+            Some("jpg"),
+            "no extension at all"
+        );
+        // Right already, or close enough.
+        assert_eq!(suggested_extension(&put("ok.jpeg", &jpeg)), None);
+        assert_eq!(suggested_extension(&put("ok.png", png)), None);
+        assert_eq!(
+            suggested_extension(&put("clip.mp4", &mov)),
+            None,
+            "MP4 and MOV share a container"
+        );
+        assert_eq!(suggested_extension(&put("notes.txt", b"{\"a\": 1}")), None);
+        assert_eq!(suggested_extension(&put("readme", b"just text")), None);
+        // Names Radlet doesn't know, hidden files and folders are left alone.
+        assert_eq!(suggested_extension(&put("photo.jpg_large", &jpeg)), None);
+        assert_eq!(suggested_extension(&put(".thumb", &jpeg)), None);
+        std::fs::create_dir(dir.path().join("pics")).unwrap();
+        assert_eq!(suggested_extension(&dir.path().join("pics")), None);
+    }
+
     use super::*;
 
     #[test]

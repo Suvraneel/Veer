@@ -26,13 +26,62 @@ public enum RenamePlan {
     public enum Problem: Error, Equatable, Sendable {
         case empty
         case unknownToken(String)
+        case emptyExtension
+        case badExtension(String)
 
         public var message: String {
             switch self {
             case .empty: return "The pattern makes an empty name."
             case .unknownToken(let t): return "\"{\(t)}\" isn't something Radlet can fill in."
+            case .emptyExtension: return "Type the new extension, such as jpg."
+            case .badExtension(let e): return "\"\(e)\" can't be an extension: no spaces, slashes or colons."
             }
         }
+    }
+
+    /// What happens to the part after the dot. Keep is the default:
+    /// renaming a file never changes what it is.
+    public enum ExtensionRule: Equatable, Sendable {
+        case keep
+        case lowercase
+        case custom(String)
+
+        /// The extension a file ends up with, or a problem with a custom one.
+        func apply(to ext: String) -> Result<String, Problem> {
+            switch self {
+            case .keep: return .success(ext)
+            case .lowercase: return .success(ext.lowercased())
+            case .custom(let typed):
+                var e = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+                while e.hasPrefix(".") { e.removeFirst() }
+                while e.hasSuffix(".") { e.removeLast() }
+                if e.isEmpty { return .failure(.emptyExtension) }
+                if e.contains(where: { $0.isWhitespace || $0 == "/" || $0 == ":" }) { return .failure(.badExtension(e)) }
+                return .success(e)
+            }
+        }
+    }
+
+    /// Extensions that name the same kind of file.
+    static let sameKind: [Set<String>] = [
+        ["jpg", "jpeg", "jpe", "jfif"], ["tif", "tiff"], ["htm", "html"], ["yml", "yaml"],
+        ["txt", "text", "md", "markdown", "mdown", "log"], ["heic", "heif"], ["aif", "aiff", "aifc"],
+        ["mpg", "mpeg"], ["mp4", "m4v"], ["mid", "midi"], ["ts", "mts", "m2ts"],
+    ]
+
+    /// A word of caution when a custom extension names a different kind of
+    /// file than some of them are: renaming doesn't convert.
+    public static func extensionWarning(_ files: [URL], rule: ExtensionRule) -> String? {
+        guard case .custom = rule, case .success(let new) = rule.apply(to: "") else { return nil }
+        let to = new.lowercased()
+        let changesKind = files.contains { url in
+            let from = url.pathExtension.lowercased()
+            guard !from.isEmpty, from != to else { return false }
+            return !sameKind.contains { $0.contains(from) && $0.contains(to) }
+        }
+        return changesKind
+            ? "Only the name changes; what's inside stays the same. To change the format, use Convert (Shift)."
+            : nil
     }
 
     public static let tokens = ["name", "n", "date", "time", "folder", "content"]
@@ -69,6 +118,7 @@ public enum RenamePlan {
     /// name wouldn't change are left out. `exists` reports files already on
     /// disk (other than the ones being renamed).
     public static func make(_ inputs: [Input], pattern: String, start: Int = 1,
+                            extensionRule: ExtensionRule = .keep,
                             calendar: Calendar = .current,
                             exists: (URL) -> Bool) -> Result<[Change], Problem> {
         // Numbers are padded to the longest one: 01 to 12.
@@ -84,7 +134,11 @@ public enum RenamePlan {
             }
             guard !stem.isEmpty else { return .failure(.empty) }
             let dir = input.url.deletingLastPathComponent()
-            let ext = input.url.pathExtension
+            let ext: String
+            switch extensionRule.apply(to: input.url.pathExtension) {
+            case .success(let e): ext = e
+            case .failure(let p): return .failure(p)
+            }
             func candidate(_ k: Int) -> URL {
                 let name = k == 1 ? stem : "\(stem) \(k)"
                 return dir.appendingPathComponent(ext.isEmpty ? name : "\(name).\(ext)")

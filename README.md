@@ -132,7 +132,7 @@ Tools ending in "…" open a window first, with a live preview where it helps.
 | **Documents and data** | **Word count** ("1,234 words · 6 min read") · Copy text · **Clean up text** · **Combine into one** · **Combine into workbook** (several tables into one .xlsx, a sheet each) |
 | **Developers** | **Format JSON**, with **Minify** and **Sort keys** presets, keeping numbers and strings exactly as written · **Format XML** / Minify, leaving the text inside elements exactly as it was · **Optimize SVG**: editor data (Inkscape, Sketch, Illustrator), metadata, comments, empty groups and whitespace removed, drawing the same pixel for pixel · **Check syntax** for JSON, YAML, TOML, XML, SVG, CSV and TSV: "Valid JSON", or the line and column of the first problem · **Copy as data URI** for pictures, SVGs and fonts (up to 2 MB), ready for CSS or HTML · **Base64**: `photo.png` becomes `photo.png.b64`, and a `.b64` file turns back into what it holds |
 | **Folders** (on copies) | **Zip together** · **Zip with password…** (AES-256) · **Merge folders** (identical files kept once) · **Flatten** · **Sort by kind** · **List contents** (a tree with sizes, or a CSV) · **Find duplicates** |
-| **Everyday** | **Rename…** with a pattern such as `Trip {date} {n}`, previewed first; `{content}` (**What's in it**) names each picture or document by what's in it, such as `Red apple on a table.jpg`, from Apple Intelligence or, without it, the text and things Vision recognises · **Copy path** · **Copy name** · **Open in Terminal** · **Share…** (AirDrop, Mail and Messages as presets) · **Copy image** · Copy SHA-256, with MD5, SHA-1 and SHA-512 as presets |
+| **Everyday** | **Rename to .jpg** comes first on the wheel when a file's name doesn't match what it holds (a .png that is really a JPEG, an iPhone photo named .jpg that is HEIC, a download with no extension), found by reading the file itself · **Rename…** with a pattern such as `Trip {date} {n}`, previewed first, keeping each extension unless you choose Lowercase or a new one (with a reminder that renaming doesn't convert); `{content}` (**What's in it**) names each picture or document by what's in it, such as `Red apple on a table.jpg`, from Apple Intelligence or, without it, the text and things Vision recognises · **Copy path** · **Copy name** · **Open in Terminal** · **Share…** (AirDrop, Mail and Messages as presets) · **Copy image** · Copy SHA-256, with MD5, SHA-1 and SHA-512 as presets |
 
 ### Around the wheel
 
@@ -372,6 +372,7 @@ radlet optimize-svg logo.svg                # "logo (optimized).svg", drawing th
 radlet check config.yaml data.json          # "Valid YAML", or the line and column; exits 1 on a problem
 radlet data-uri icon.svg                    # prints data:image/svg+xml;base64,...
 radlet base64 photo.png                     # photo.png.b64; radlet base64 photo.png.b64 decodes it
+radlet fix-extension download photo.png     # renamed to what they really hold; --dry-run to preview
 radlet clean notes.txt                      # UTF-8, \n line endings, no trailing spaces
 radlet zip Photos notes.txt                 # Archive.zip; radlet convert Photos --to zip for one each
 RADLET_ZIP_PASSWORD=secret radlet zip Photos # every file locked with AES-256
@@ -440,7 +441,7 @@ You don't have to write TOML: **Save as Loadout…** in a tool window, or **Sett
 
 | Tools | What they do |
 | --- | --- |
-| `inspect_files` | What each file is, what it can become, and which steps fit it |
+| `inspect_files` | What each file is, what it can become, which steps fit it, and the extension it should have when its name is wrong |
 | `convert`, `compress`, `run_steps` | Any conversion; compressing by level or to a size; chains of the loadout steps above |
 | `combine_into_pdf`, `combine_documents`, `combine_into_workbook` | Several files into one PDF, one document, or one Excel workbook |
 | `split_pdf`, `scan_documents` | PDFs into parts; photos of pages into one searchable PDF |
@@ -463,7 +464,7 @@ JSON, one object per line. Every request gets exactly one reply with the same `i
 | Method | Params | Result |
 | --- | --- | --- |
 | `hello` | none | `version`, `protocol` (1), `capabilities` (`ffmpeg`, `ffprobe`, `sips`, `pdfium`, `vision`, `avfoundation`, `apple_intelligence`) |
-| `inspect` | `paths`, `recipes_dir?`, `installs?`, `shortcuts?` | `files` (detected formats), `wheel` (`convert`, `tools`, `recipes` slots). A slot may carry `variants`: presets with a short `label`, a `hint` and their own `action`, shown by the Orbit and Bloom styles. With `installs`, slots that need something this Mac can get come after the rest, with `needs`: `ffmpeg`, `keynote`, `pages` or `numbers`. Conversions come most useful first; `more: true` marks one to a format fewer people want, which the app keeps behind More…. `shortcuts` (names) adds those shortcuts to the `recipes` slots, as `run_shortcut` actions. |
+| `inspect` | `paths`, `recipes_dir?`, `installs?`, `shortcuts?` | `files` (detected formats, and `fix_extension` when a file's name doesn't match what it holds), `wheel` (`convert`, `tools`, `recipes` slots). A slot may carry `variants`: presets with a short `label`, a `hint` and their own `action`, shown by the Orbit and Bloom styles. With `installs`, slots that need something this Mac can get come after the rest, with `needs`: `ffmpeg`, `keynote`, `pages` or `numbers`. Conversions come most useful first; `more: true` marks one to a format fewer people want, which the app keeps behind More…. `shortcuts` (names) adds those shortcuts to the `recipes` slots, as `run_shortcut` actions. |
 | `shortcuts` | none | `shortcuts`: the names in the Shortcuts app (macOS) |
 | `content_names` | `paths` | `names`: a short name for what's in each file (or `null`), for Rename's `{content}` |
 | `run` | `paths`, `action`, `options?`, `isolate?` | `job`, `units`, then events: `item_started`, `item_progress`, `item_finished`, `job_finished`. An outcome lists everything it created in `outputs` (several page images, or one folder). A failed outcome's `error` may carry `need` (the four above, `speech_language` or `translation_language`). |

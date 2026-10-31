@@ -41,6 +41,8 @@ package final class WheelModel: ObservableObject {
     package var full: Wheel = .empty
     /// The files the wheel is for, for the app's own tools.
     package var files: [URL] = []
+    /// Extensions files should have, by path, when their names are wrong.
+    package var fixes: [String: String] = [:]
     package private(set) var style: WheelStyle = .dial
     package private(set) var slotCount = WheelSpec.defaultCount
     /// Slots that didn't fit, behind "More…".
@@ -66,7 +68,7 @@ package final class WheelModel: ObservableObject {
         let source: [Slot]
         switch mode {
         case .convert: source = full.convert
-        case .tools: source = loading ? [] : WheelLayout.withAppTools(full.tools, files: files)
+        case .tools: source = loading ? [] : WheelLayout.withAppTools(full.tools, files: files, fixes: fixes)
         case .recipes: source = full.recipes
         }
         let laid = WheelLayout.fit(source, max: slotCount, usage: usage)

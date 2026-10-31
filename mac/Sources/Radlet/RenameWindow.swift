@@ -15,6 +15,33 @@ final class RenameModel: ObservableObject {
         }
     }
     @Published var startText = "1" { didSet { plan() } }
+    /// What happens to the part after the dot: kept unless asked.
+    @Published var extensionMode: ExtensionMode = .keep { didSet { plan() } }
+    @Published var newExtension = "" { didSet { plan() } }
+
+    enum ExtensionMode: String, CaseIterable, Identifiable {
+        case keep, lowercase, change
+        var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .keep: return "Keep"
+            case .lowercase: return "Lowercase"
+            case .change: return "Change to"
+            }
+        }
+    }
+
+    var extensionRule: RenamePlan.ExtensionRule {
+        switch extensionMode {
+        case .keep: return .keep
+        case .lowercase: return .lowercase
+        case .change: return .custom(newExtension)
+        }
+    }
+
+    /// Renaming doesn't convert: said when a new extension names another
+    /// kind of file.
+    var extensionWarning: String? { RenamePlan.extensionWarning(files, rule: extensionRule) }
     @Published private(set) var changes: [RenamePlan.Change] = []
     @Published private(set) var problem: String?
     @Published private(set) var working = false
@@ -101,7 +128,7 @@ final class RenameModel: ObservableObject {
 
     private func plan() {
         let inputs = files.map { RenamePlan.Input(url: $0, date: dates[$0], content: contents[$0]) }
-        switch RenamePlan.make(inputs, pattern: pattern, start: start,
+        switch RenamePlan.make(inputs, pattern: pattern, start: start, extensionRule: extensionRule,
                                exists: { FileManager.default.fileExists(atPath: $0.path) }) {
         case .success(let c):
             changes = c
@@ -228,6 +255,28 @@ struct RenameView: View {
                         .help("A short name for what's in each picture or document, made on this Mac")
                 }
                 .controlSize(.small)
+                HStack(spacing: 8) {
+                    Text("Extension")
+                    Picker("Extension", selection: $model.extensionMode) {
+                        ForEach(RenameModel.ExtensionMode.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(width: 270)
+                    if model.extensionMode == .change {
+                        TextField("jpg", text: $model.newExtension)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(.body, design: .monospaced))
+                            .frame(width: 90)
+                    }
+                    Spacer()
+                }
+                if let warning = model.extensionWarning {
+                    Label(warning, systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .padding(14)
             Divider()

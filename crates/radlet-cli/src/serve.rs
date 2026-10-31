@@ -198,9 +198,16 @@ pub fn serve(
                     .paths
                     .iter()
                     .zip(&detected)
-                    .map(|(path, f)| match f {
-                        Some(f) => json!({ "path": path, "format": f, "label": f.label(), "category": f.category() }),
-                        None => json!({ "path": path, "format": null }),
+                    .map(|(path, f)| {
+                        let mut v = match f {
+                            Some(f) => json!({ "path": path, "format": f, "label": f.label(), "category": f.category() }),
+                            None => json!({ "path": path, "format": null }),
+                        };
+                        // Named as something it isn't, or not named at all.
+                        if let Some(ext) = format::suggested_extension(path) {
+                            v["fix_extension"] = json!(ext);
+                        }
+                        v
                     })
                     .collect();
                 let (recipes, recipe_errors) = all_recipes(p.recipes_dir.as_ref());

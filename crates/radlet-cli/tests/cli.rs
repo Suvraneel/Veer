@@ -1439,3 +1439,50 @@ fn md5_of(data: &[u8]) -> u128 {
     }
     u128::from_be_bytes(out)
 }
+
+#[test]
+fn wrong_extensions_are_spotted_and_fixed() {
+    let dir = tempfile::tempdir().unwrap();
+    let d = dir.path();
+    let jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 0, 0x10, b'J', b'F', b'I', b'F', 0];
+    std::fs::write(d.join("photo.png"), jpeg).unwrap();
+    std::fs::write(d.join("photo.jpg"), b"already here").unwrap();
+    std::fs::write(d.join("scan"), jpeg).unwrap();
+    std::fs::write(d.join("fine.jpg"), jpeg).unwrap();
+
+    // The app hears about it when it inspects.
+    let mut h = Helper::start();
+    h.send(json!({"id": 1, "method": "inspect", "params": {"paths": [d.join("photo.png"), d.join("fine.jpg")]}}));
+    let r = h.next();
+    assert_eq!(r["result"]["files"][0]["fix_extension"], "jpg", "{r}");
+    assert_eq!(r["result"]["files"][0]["format"], "jpeg");
+    assert!(
+        r["result"]["files"][1].get("fix_extension").is_none(),
+        "{r}"
+    );
+
+    let (code, out, _) = radlet(
+        &[
+            "fix-extension",
+            "--dry-run",
+            "photo.png",
+            "scan",
+            "fine.jpg",
+        ],
+        d,
+    );
+    assert_eq!(code, 0);
+    assert_eq!(
+        out,
+        "photo.png → photo.jpg\nscan → scan.jpg\nfine.jpg: fine as it is\n"
+    );
+    assert!(d.join("photo.png").exists(), "a dry run changes nothing");
+
+    let (code, out, _) = radlet(&["fix-extension", "photo.png", "scan"], d);
+    assert_eq!(code, 0);
+    // photo.jpg was taken: the next free name, nothing replaced.
+    assert_eq!(out, "✓ photo.png → photo 2.jpg\n✓ scan → scan.jpg\n");
+    assert_eq!(std::fs::read(d.join("photo.jpg")).unwrap(), b"already here");
+    assert_eq!(std::fs::read(d.join("photo 2.jpg")).unwrap(), jpeg);
+    assert!(!d.join("photo.png").exists() && !d.join("scan").exists());
+}

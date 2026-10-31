@@ -273,7 +273,9 @@ fn tools(caps: &Capabilities) -> Vec<Value> {
         tool(
             "inspect_files",
             "Inspect files",
-            "What each file is, the formats it can be converted to, and which steps apply to it.",
+            "What each file is, the formats it can be converted to, and which steps apply to it. \
+             A file whose name doesn't match what it holds (a .png that is really a JPEG, or no \
+             extension at all) gets fix_extension: the extension it should have.",
             json!({ "paths": paths_schema() }),
             &["paths"],
             true,
@@ -1180,11 +1182,17 @@ fn inspect(files: &[PathBuf], caps: &Capabilities) -> Result<(String, Value), St
     let described: Vec<Value> = files
         .iter()
         .zip(&detected)
-        .map(|(p, f)| match f {
-            Some(f) => {
-                json!({ "path": p, "format": f, "label": f.label(), "category": f.category() })
+        .map(|(p, f)| {
+            let mut v = match f {
+                Some(f) => {
+                    json!({ "path": p, "format": f, "label": f.label(), "category": f.category() })
+                }
+                None => json!({ "path": p, "format": null }),
+            };
+            if let Some(ext) = format::suggested_extension(p) {
+                v["fix_extension"] = json!(ext);
             }
-            None => json!({ "path": p, "format": null }),
+            v
         })
         .collect();
     let mut text = String::new();
@@ -1195,6 +1203,11 @@ fn inspect(files: &[PathBuf], caps: &Capabilities) -> Result<(String, Value), St
             f.map(|f| f.label().to_string())
                 .unwrap_or_else(|| "not a format Radlet knows".into())
         ));
+        if let Some(ext) = format::suggested_extension(p) {
+            text.push_str(&format!(
+                "  Its name is wrong for what it holds: it should end in .{ext}\n"
+            ));
+        }
     }
     let target_names: Vec<String> = targets
         .iter()

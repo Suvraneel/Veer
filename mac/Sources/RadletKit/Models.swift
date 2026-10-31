@@ -269,6 +269,14 @@ public struct FileInfo: Codable, Sendable {
     public let path: String
     public let format: String?
     public let label: String?
+    /// The extension the file should have, when its name doesn't match
+    /// what it holds (a .png that is really a JPEG) or it has none.
+    public let fixExtension: String?
+
+    private enum CodingKeys: String, CodingKey {
+        case path, format, label
+        case fixExtension = "fix_extension"
+    }
 }
 
 public struct InspectResult: Codable, Sendable {
