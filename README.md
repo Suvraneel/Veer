@@ -30,7 +30,7 @@ Drag files, hold a key, flick to a tool. Convert, compress, crop, translate and 
 Doing anything to a file on a Mac usually means a detour: open Preview and export, or upload it to a converter website and download the result. Radlet takes the drag you're already making and adds one key, the way a game's weapon wheel puts all your gear one flick away. Hold **Shift** mid-drag and a wheel of formats opens under the pointer. Drop on **JPEG** and the JPEGs appear next to the originals.
 
 - **No window to open.** The wheel appears where the pointer is, in the middle of a Finder drag. Hold **Command** instead for tools, or **Control** for your loadouts. Or select files and press **⌃⌥V**.
-- **Nothing leaves your Mac.** No network access, accounts or telemetry. Text recognition, background removal, face detection, subtitles and translation use Apple's on-device frameworks.
+- **Nothing you convert leaves your Mac.** Files are never uploaded, and there are no accounts or telemetry. Text recognition, background removal, face detection, subtitles and translation use Apple's on-device frameworks. Radlet only goes online to check for updates and, if you say yes, to download FFmpeg.
 - **Nothing gets overwritten.** Results land beside the originals under a free name, and every job can be undone from History.
 
 **Why "Radlet"?** It's **rad**ial + **-let**. Radial, because it's a wheel (in German and Dutch, *Rad* even means wheel). *-let*, because it's a small one, as in *droplet* or *booklet*: it opens under your pointer and gets out of the way. More importantly, *rad* is slang for awesome. The wheel tries to live up to that.
@@ -61,7 +61,7 @@ Radlet is two programs. The **Mac app** (Swift) spots the drag, draws the wheel 
 - **One bad file fails only itself.** Crashes and hangs are reported per file.
 - **Upright and colour-correct.** EXIF orientation is applied to pixels, and ICC profiles are carried into PNG, JPEG, WebP, TIFF and PDF outputs.
 - **Bounded inputs.** Images up to 40,000 px a side and 1 GiB decoded; PDFs decompress to at most 512 MB; text files up to 64 MB; SVGs drawn at most 16,384 px a side; ZIPs extract at most 1,000 times their size (and 64 GB); folders up to 500,000 items.
-- **Local only.** No network access, accounts or telemetry.
+- **Local only.** Files are worked on here and never uploaded; no accounts or telemetry. The only network use is the daily update check (which asks before installing) and downloading FFmpeg when you accept.
 - **Cleans up after itself.** When stdin closes (the app quit or crashed), the helper cancels its jobs and exits. A worker whose supervisor dies kills itself and its FFmpeg.
 
 ## Features
