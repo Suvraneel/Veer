@@ -14,11 +14,14 @@ set -euo pipefail
 
 TAG="${1:-}"
 EXPECTED="$(tr '[:upper:]' '[:lower:]' <<< "${2:-}")"
-if [[ ! "$TAG" =~ ^ffmpeg-([0-9]+(\.[0-9]+)*)-[0-9]+$ ]] || [[ -n "$EXPECTED" && ! "$EXPECTED" =~ ^[0-9a-f]{64}$ ]]; then
+usage() {
   echo "usage: pin-ffmpeg.sh ffmpeg-<version>-<build> [SHA-256], such as ffmpeg-8.0.1-1" >&2
   exit 2
-fi
+}
+[[ "$TAG" =~ ^ffmpeg-([0-9]+(\.[0-9]+)*)-[0-9]+$ ]] || usage
+# Read before the next match, which replaces BASH_REMATCH.
 VERSION="${BASH_REMATCH[1]}"
+[[ -z "$EXPECTED" || "$EXPECTED" =~ ^[0-9a-f]{64}$ ]] || usage
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 REMOTE="$(git -C "$ROOT" remote get-url origin 2> /dev/null || echo https://github.com/Suvraneel/Radlet.git)"
 REPO="$(sed -E 's#^(https://github.com/|git@github.com:)##; s#\.git$##' <<< "$REMOTE")"

@@ -9,7 +9,7 @@ jobs:
     name: Engine (Linux)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
@@ -31,7 +31,7 @@ jobs:
     name: Mac app
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - name: Check Swift is 6.2 or later
         # Older Swift leaves out the Apple Intelligence tools (FoundationModels).
@@ -69,7 +69,7 @@ jobs:
           test -s "$work/tone.m4a" && test -s "$work/tone.aiff"
           file "$work/tone.m4a" "$work/tone.aiff"
       - run: ditto -c -k --keepParent dist/Radlet.app dist/Radlet.zip
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Radlet-mac
           path: dist/Radlet.zip
