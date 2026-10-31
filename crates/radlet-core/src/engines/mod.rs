@@ -7,6 +7,7 @@ pub mod avmedia;
 pub mod bsdtar;
 pub mod codes;
 pub mod data;
+pub mod devtools;
 pub mod doc;
 pub mod docpdf;
 pub mod docx;

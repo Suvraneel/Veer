@@ -7,7 +7,9 @@ public final class JobProgress: ObservableObject {
     public enum Phase: Sendable { case running, finished, failed }
     /// What a job that writes no files computes, which decides how the
     /// results go on the clipboard.
-    public enum ValueKind: Sendable { case checksum, text, count, code, description }
+    /// What a job's values are: copied to the clipboard, except a syntax
+    /// check's verdict, which is only shown.
+    public enum ValueKind: Sendable { case checksum, text, count, code, description, check, dataURI }
 
     /// A value computed for one file.
     public struct NamedValue: Equatable, Sendable {
@@ -34,6 +36,8 @@ public final class JobProgress: ObservableObject {
     @Published public private(set) var values: [NamedValue] = []
     /// Set after `reset` for jobs that compute values.
     public var valueKind: ValueKind = .checksum
+    /// "SHA-256", or the algorithm a checksum job uses.
+    public var checksumName = "SHA-256"
     /// A one-off status line, such as the result of Undo.
     @Published public var message: String?
     @Published public var hovering = false
@@ -62,6 +66,7 @@ public final class JobProgress: ObservableObject {
         savedBytes = 0
         values = []
         valueKind = .checksum
+        checksumName = "SHA-256"
         message = nil
         replaceable = []
         partial = [:]
@@ -113,6 +118,13 @@ public final class JobProgress: ObservableObject {
             return "\(completed) of \(total)"
         case .finished, .failed:
             if let message { return message }
+            if valueKind == .check {
+                // Problems are failures, each with its line and column.
+                let problems = failures.filter { $0 != "Cancelled" }.count + skipped.count
+                if problems == 0, values.count == 1 { return values[0].value }
+                if problems == 0 { return "All \(values.count) valid" }
+                return values.isEmpty ? "\(problems) with problems" : "\(values.count) valid · \(problems) with problems"
+            }
             if !values.isEmpty {
                 // One word count or code is worth showing, not just
                 // copying.
@@ -122,7 +134,9 @@ public final class JobProgress: ObservableObject {
                 let what: String
                 switch valueKind {
                 case .text: what = "Text"
-                case .checksum: what = "SHA-256"
+                case .checksum: what = checksumName
+                case .dataURI: what = values.count == 1 ? "Data URI" : "Data URIs"
+                case .check: what = "Results"
                 case .count: what = "Word counts"
                 case .code: what = "Codes"
                 case .description: what = "Alt text"
@@ -149,14 +163,14 @@ public final class JobProgress: ObservableObject {
     /// text itself for one file; for several, each under its file name.
     /// Word counts: the count, or "name: count" lines.
     public var clipboardText: String? {
-        guard !values.isEmpty else { return nil }
+        guard !values.isEmpty, valueKind != .check else { return nil }
         // Files finish in any order; the clipboard follows the selection.
         let values = self.values.sorted { $0.index < $1.index }
         switch valueKind {
         case .checksum:
             if values.count == 1 { return values[0].value }
             return values.map { "\($0.value)  \($0.name)" }.joined(separator: "\n")
-        case .text, .code, .description:
+        case .text, .code, .description, .dataURI, .check:
             if values.count == 1 { return values[0].value }
             return values.map { "\($0.name)\n\n\($0.value)" }.joined(separator: "\n\n")
         case .count:

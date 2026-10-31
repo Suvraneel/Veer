@@ -1268,6 +1268,51 @@ fn mcp_offers_the_wheels_tools() {
     );
     assert_eq!(icons["result"]["isError"], false, "{icons}");
 
+    // Checking, data URIs, Base64 and other checksums.
+    std::fs::write(d.join("data.json"), "{\"a\": 1}").unwrap();
+    std::fs::write(d.join("conf.toml"), "a = \n").unwrap();
+    let check = mcp_call(
+        &mut h,
+        17,
+        "check_syntax",
+        json!({"paths": [d.join("data.json"), d.join("conf.toml")]}),
+    );
+    let text = check["result"]["content"][0]["text"].as_str().unwrap();
+    assert!(
+        text.contains("data.json:\nValid JSON") && text.contains("conf.toml: line 1, column 5"),
+        "{check}"
+    );
+    let uri = mcp_call(&mut h, 18, "data_uri", json!({"paths": [code]}));
+    assert!(
+        uri["result"]["structuredContent"]["results"][0]["value"]
+            .as_str()
+            .unwrap()
+            .starts_with("data:image/png;base64,"),
+        "{uri}"
+    );
+    let b64 = mcp_call(
+        &mut h,
+        19,
+        "base64",
+        json!({"paths": [d.join("data.json")]}),
+    );
+    assert_eq!(b64["result"]["isError"], false, "{b64}");
+    assert!(d.join("data.json.b64").exists());
+    let sum = mcp_call(
+        &mut h,
+        20,
+        "checksum",
+        json!({"paths": [d.join("data.json")], "algorithm": "sha1"}),
+    );
+    assert_eq!(
+        sum["result"]["structuredContent"]["results"][0]["value"]
+            .as_str()
+            .unwrap()
+            .len(),
+        40,
+        "{sum}"
+    );
+
     // The newly documented steps are suggested where they fit.
     std::fs::write(d.join("data.json"), "{\"a\": 1}").unwrap();
     let inspect = mcp_call(
@@ -1281,4 +1326,116 @@ fn mcp_offers_the_wheels_tools() {
         steps.as_array().unwrap().iter().any(|s| s == "format_json"),
         "{steps}"
     );
+}
+
+#[test]
+fn developer_tools_from_the_command_line() {
+    let dir = tempfile::tempdir().unwrap();
+    let d = dir.path();
+    std::fs::write(d.join("b.json"), r#"{"z":1,"a":[2,1]}"#).unwrap();
+    std::fs::write(d.join("bad.json"), "{\"a\": 1,\n}").unwrap();
+    std::fs::write(
+        d.join("feed.xml"),
+        "<rss><item><t>Hi <b>there</b></t></item></rss>",
+    )
+    .unwrap();
+    std::fs::write(d.join("logo.svg"), "<?xml version=\"1.0\"?>\n<!-- made by hand -->\n<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 4 4\">\n  <rect width=\"4\" height=\"4\"/>\n</svg>\n").unwrap();
+
+    assert_eq!(radlet(&["json", "b.json", "--sort-keys"], d).0, 0);
+    assert_eq!(
+        std::fs::read_to_string(d.join("b (sorted).json")).unwrap(),
+        "{\n  \"a\": [\n    2,\n    1\n  ],\n  \"z\": 1\n}\n"
+    );
+    assert_eq!(radlet(&["xml", "feed.xml"], d).0, 0);
+    assert_eq!(
+        std::fs::read_to_string(d.join("feed (formatted).xml")).unwrap(),
+        "<rss>\n  <item>\n    <t>Hi <b>there</b></t>\n  </item>\n</rss>\n"
+    );
+    assert_eq!(radlet(&["optimize-svg", "logo.svg"], d).0, 0);
+    assert_eq!(
+        std::fs::read_to_string(d.join("logo (optimized).svg")).unwrap(),
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 4 4\"><rect width=\"4\" height=\"4\"/></svg>"
+    );
+
+    // A syntax check prints the verdict and fails on a problem, for scripts.
+    let (code, out, err) = radlet(&["check", "b.json", "bad.json"], d);
+    assert_eq!(code, 1);
+    assert!(out.contains("b.json: Valid JSON"), "{out}");
+    assert!(
+        err.contains("bad.json: line 2, column 1: key must be a string"),
+        "{err}"
+    );
+    assert_eq!(
+        radlet(&["check", "logo.svg"], d),
+        (0, "Well-formed SVG\n".into(), String::new())
+    );
+
+    let (code, uri, _) = radlet(&["data-uri", "logo.svg"], d);
+    assert_eq!(code, 0);
+    assert!(
+        uri.starts_with("data:image/svg+xml;base64,PD94bWwg"),
+        "{uri}"
+    );
+    assert_eq!(radlet(&["base64", "logo.svg"], d).0, 0);
+    std::fs::rename(d.join("logo.svg.b64"), d.join("copy.svg.b64")).unwrap();
+    assert_eq!(radlet(&["base64", "copy.svg.b64"], d).0, 0);
+    assert_eq!(
+        std::fs::read(d.join("copy.svg")).unwrap(),
+        std::fs::read(d.join("logo.svg")).unwrap()
+    );
+    let (code, sum, _) = radlet(&["checksum", "--algorithm", "md5", "b.json"], d);
+    assert_eq!(code, 0);
+    assert!(sum.starts_with(&format!(
+        "{:x}  ",
+        md5_of(&std::fs::read(d.join("b.json")).unwrap())
+    )));
+}
+
+/// MD5 by the book, so the test doesn't trust the code it checks.
+fn md5_of(data: &[u8]) -> u128 {
+    let s: [u32; 64] = [
+        7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5, 9, 14, 20, 5,
+        9, 14, 20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 6, 10,
+        15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
+    ];
+    let k: Vec<u32> = (0..64)
+        .map(|i| ((i as f64 + 1.0).sin().abs() * 4294967296.0) as u32)
+        .collect();
+    let (mut a0, mut b0, mut c0, mut d0) =
+        (0x67452301u32, 0xefcdab89u32, 0x98badcfeu32, 0x10325476u32);
+    let mut msg = data.to_vec();
+    msg.push(0x80);
+    while msg.len() % 64 != 56 {
+        msg.push(0);
+    }
+    msg.extend_from_slice(&((data.len() as u64) * 8).to_le_bytes());
+    for chunk in msg.chunks(64) {
+        let m: Vec<u32> = chunk
+            .chunks(4)
+            .map(|w| u32::from_le_bytes([w[0], w[1], w[2], w[3]]))
+            .collect();
+        let (mut a, mut b, mut c, mut d) = (a0, b0, c0, d0);
+        for i in 0..64 {
+            let (f, g) = match i / 16 {
+                0 => ((b & c) | (!b & d), i),
+                1 => ((d & b) | (!d & c), (5 * i + 1) % 16),
+                2 => (b ^ c ^ d, (3 * i + 5) % 16),
+                _ => (c ^ (b | !d), (7 * i) % 16),
+            };
+            let f = f.wrapping_add(a).wrapping_add(k[i]).wrapping_add(m[g]);
+            a = d;
+            d = c;
+            c = b;
+            b = b.wrapping_add(f.rotate_left(s[i]));
+        }
+        a0 = a0.wrapping_add(a);
+        b0 = b0.wrapping_add(b);
+        c0 = c0.wrapping_add(c);
+        d0 = d0.wrapping_add(d);
+    }
+    let mut out = [0u8; 16];
+    for (i, v) in [a0, b0, c0, d0].iter().enumerate() {
+        out[i * 4..i * 4 + 4].copy_from_slice(&v.to_le_bytes());
+    }
+    u128::from_be_bytes(out)
 }

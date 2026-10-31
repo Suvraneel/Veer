@@ -205,7 +205,12 @@ fn execute_inner(
         (Action::Steps { steps, label }, [input]) => {
             pipeline::run_steps(input, steps, label.as_deref(), &mut ctx)
         }
-        (Action::Checksum, [input]) => pipeline::checksum(input, &mut ctx),
+        (Action::Checksum { algorithm }, [input]) => {
+            pipeline::checksum(input, *algorithm, &mut ctx)
+        }
+        (Action::CheckSyntax, [input]) => pipeline::check_syntax(input, &mut ctx),
+        (Action::DataUri, [input]) => pipeline::data_uri(input, &mut ctx),
+        (Action::Base64, [input]) => pipeline::base64(input, &mut ctx),
         (Action::CopyText, [input]) => pipeline::copy_text(input, &mut ctx),
         (Action::ExtractFrames { count, format }, [input]) => {
             pipeline::extract_frames(input, *count, *format, &mut ctx)
@@ -772,7 +777,7 @@ mod tests {
     fn panics_become_failures() {
         let unit = plan(
             &[PathBuf::from("/x.png")],
-            &Action::Checksum,
+            &Action::checksum(),
             &OutputLocation::BesideSource,
             "p",
         )
@@ -796,7 +801,7 @@ mod tests {
     fn cancelled_batch_runs_nothing() {
         let units = plan(
             &[PathBuf::from("/nope.png")],
-            &Action::Checksum,
+            &Action::checksum(),
             &OutputLocation::BesideSource,
             "c",
         );
@@ -876,7 +881,7 @@ mod tests {
         std::fs::write(&p, "x").unwrap();
         let units = plan(
             &[p],
-            &Action::Checksum,
+            &Action::checksum(),
             &OutputLocation::BesideSource,
             "hang",
         );
@@ -904,7 +909,13 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let p = dir.path().join("x.txt");
         std::fs::write(&p, b"abc").unwrap();
-        let unit = plan(&[p], &Action::Checksum, &OutputLocation::BesideSource, "w").remove(0);
+        let unit = plan(
+            &[p],
+            &Action::checksum(),
+            &OutputLocation::BesideSource,
+            "w",
+        )
+        .remove(0);
         let input = serde_json::to_vec(&unit).unwrap();
         let mut out = Vec::new();
         let code = worker_main(&mut input.as_slice(), &mut out, &Capabilities::none());

@@ -16,7 +16,7 @@ use std::sync::{Arc, Mutex};
 
 use radlet_core::format::Category;
 use radlet_core::job::{self, Event, Executor, Outcome, RunOptions, Status};
-use radlet_core::ops::{CompressLevel, IconKind, SplitMode, Step};
+use radlet_core::ops::{CompressLevel, HashKind, IconKind, SplitMode, Step};
 use radlet_core::{catalog, format, privacy, Action, Capabilities, Format, OutputLocation};
 use serde_json::{json, Value};
 
@@ -263,7 +263,9 @@ trace {color?: true|false, detail?: low|medium|high} redraws a picture as an SVG
 blur_faces {style?: pixelate|blur|black} hides every face in a picture (Mac); \
 translate {to, from?} translates a document or subtitles on-device, with language tags such as fr or pt-BR (macOS 26); \
 clean_text tidies a text file (UTF-8, one kind of line ending, no trailing spaces); \
-format_json {minify?} re-indents JSON, or with minify removes the spaces. \
+format_json {minify?, sort_keys?} re-indents JSON, or with minify removes the spaces, with sort_keys putting keys in alphabetical order; \
+format_xml {minify?} re-indents XML or SVG, or with minify removes the whitespace between tags and the comments; \
+optimize_svg makes an SVG smaller without changing how it looks (editor data, metadata and whitespace removed). \
 Steps run in order on each file, for example [{\"op\":\"resize\",\"max\":1600},{\"op\":\"convert\",\"to\":\"webp\"}].";
 
 fn tools(caps: &Capabilities) -> Vec<Value> {
@@ -378,10 +380,40 @@ fn tools(caps: &Capabilities) -> Vec<Value> {
         tool(
             "checksum",
             "Checksum",
-            "SHA-256 of each file. Writes nothing.",
+            "A checksum of each file: SHA-256, or MD5, SHA-1 or SHA-512. Writes nothing.",
+            json!({
+                "paths": paths_schema(),
+                "algorithm": { "type": "string", "enum": ["sha256", "md5", "sha1", "sha512"] },
+            }),
+            &["paths"],
+            true,
+        ),
+        tool(
+            "check_syntax",
+            "Check syntax",
+            "Whether JSON, YAML, TOML, XML, SVG, CSV and TSV files are well formed, and where \
+             the first problem is (line and column). Writes nothing.",
             json!({ "paths": paths_schema() }),
             &["paths"],
             true,
+        ),
+        tool(
+            "data_uri",
+            "Data URI",
+            "Pictures (PNG, JPEG, GIF, WebP, AVIF, SVG, ICO, BMP) and fonts (TTF, OTF, WOFF, \
+             WOFF2), each as a data: URI to put in CSS or HTML. Files up to 2 MB. Writes nothing.",
+            json!({ "paths": paths_schema() }),
+            &["paths"],
+            true,
+        ),
+        tool(
+            "base64",
+            "Base64",
+            "Encode each file as Base64 text beside it (photo.png.b64), or decode a .b64 file \
+             back into the file it holds.",
+            json!({ "paths": paths_schema(), "output_dir": output_dir_schema() }),
+            &["paths"],
+            false,
         ),
         tool(
             "list_loadouts",
@@ -891,7 +923,17 @@ fn call(
         "extract_text" => run(args, Action::CopyText, ctx, cancel, progress),
         "count_words" => run(args, Action::WordCount, ctx, cancel, progress),
         "zip" => run(args, Action::ZipAll, ctx, cancel, progress),
-        "checksum" => run(args, Action::Checksum, ctx, cancel, progress),
+        "checksum" => {
+            let algorithm = match args.get("algorithm").and_then(Value::as_str) {
+                None => HashKind::Sha256,
+                Some(a) => serde_json::from_value(json!(a.to_lowercase().replace('-', "")))
+                    .map_err(|_| format!("algorithm is sha256, md5, sha1 or sha512, not {a}"))?,
+            };
+            run(args, Action::Checksum { algorithm }, ctx, cancel, progress)
+        }
+        "check_syntax" => run(args, Action::CheckSyntax, ctx, cancel, progress),
+        "data_uri" => run(args, Action::DataUri, ctx, cancel, progress),
+        "base64" => run(args, Action::Base64, ctx, cancel, progress),
         "run_loadout" | "run_recipe" => {
             let wanted = args
                 .get("loadout")
@@ -1099,7 +1141,15 @@ fn inspect(files: &[PathBuf], caps: &Capabilities) -> Result<(String, Value), St
             },
         ),
         ("clean_text", Step::CleanText),
-        ("format_json", Step::FormatJson { minify: false }),
+        (
+            "format_json",
+            Step::FormatJson {
+                minify: false,
+                sort_keys: false,
+            },
+        ),
+        ("format_xml", Step::FormatXml { minify: false }),
+        ("optimize_svg", Step::OptimizeSvg),
         (
             "redact_text",
             Step::RedactText {

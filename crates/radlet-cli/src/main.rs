@@ -14,7 +14,8 @@ use anyhow::{bail, Context as _, Result};
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use radlet_core::job::{self, Event, Executor, RunOptions, Status};
 use radlet_core::ops::{
-    IconKind, NumberPosition, NumberStyle, PageTurn, Rect, RedactStyle, SplitMode, TraceDetail,
+    HashKind, IconKind, NumberPosition, NumberStyle, PageTurn, Rect, RedactStyle, SplitMode,
+    TraceDetail,
 };
 use radlet_core::{
     catalog, format, Action, Capabilities, CompressLevel, Format, OutputLocation, Recipe, Step,
@@ -51,6 +52,25 @@ struct RunArgs {
     /// Run in this process instead of isolated workers (faster, less safe).
     #[arg(long)]
     inline: bool,
+}
+
+#[derive(Copy, Clone, ValueEnum)]
+enum Algorithm {
+    Md5,
+    Sha1,
+    Sha256,
+    Sha512,
+}
+
+impl Algorithm {
+    fn kind(self) -> HashKind {
+        match self {
+            Algorithm::Md5 => HashKind::Md5,
+            Algorithm::Sha1 => HashKind::Sha1,
+            Algorithm::Sha256 => HashKind::Sha256,
+            Algorithm::Sha512 => HashKind::Sha512,
+        }
+    }
 }
 
 #[derive(Copy, Clone, ValueEnum)]
@@ -478,6 +498,40 @@ enum Command {
         run: RunArgs,
         #[arg(long)]
         minify: bool,
+        /// Put every object's keys in alphabetical order.
+        #[arg(long)]
+        sort_keys: bool,
+    },
+    /// Re-indent XML or SVG files, or with --minify remove the whitespace
+    /// between tags and the comments. Elements holding text keep it exactly.
+    Xml {
+        #[command(flatten)]
+        run: RunArgs,
+        #[arg(long)]
+        minify: bool,
+    },
+    /// Make SVG files smaller without changing how they look: editor data,
+    /// metadata, comments and whitespace removed.
+    #[command(alias = "svgo")]
+    OptimizeSvg {
+        #[command(flatten)]
+        run: RunArgs,
+    },
+    /// Check that JSON, YAML, TOML, XML, SVG, CSV and TSV files are well
+    /// formed; a problem is shown with its line and column.
+    Check {
+        #[command(flatten)]
+        run: RunArgs,
+    },
+    /// Print pictures, SVGs and fonts as data: URIs, for CSS and HTML.
+    DataUri {
+        #[command(flatten)]
+        run: RunArgs,
+    },
+    /// Encode files as Base64 (photo.png.b64), or decode .b64 files.
+    Base64 {
+        #[command(flatten)]
+        run: RunArgs,
     },
     /// Put files and folders, together, into one ZIP archive.
     Zip {
@@ -566,10 +620,12 @@ enum Command {
         #[arg(long)]
         from: Option<String>,
     },
-    /// Print SHA-256 checksums.
+    /// Print checksums (SHA-256, or --algorithm md5, sha1 or sha512).
     Checksum {
         #[command(flatten)]
         run: RunArgs,
+        #[arg(long, value_enum, default_value = "sha256")]
+        algorithm: Algorithm,
     },
     /// Run a loadout by name, or from a .toml file.
     #[command(alias = "recipe")]
@@ -771,9 +827,12 @@ fn run(args: &RunArgs, action: Action, json_out: bool) -> Result<ExitCode> {
         (false, Some((program, args))) => Executor::Subprocess { program, args },
         _ => Executor::Inline,
     };
-    let is_checksum = matches!(action, Action::Checksum);
-    let is_text = matches!(action, Action::CopyText | Action::ReadCodes);
-    let is_count = matches!(action, Action::WordCount);
+    let is_checksum = matches!(action, Action::Checksum { .. });
+    let is_text = matches!(
+        action,
+        Action::CopyText | Action::ReadCodes | Action::DataUri
+    );
+    let is_count = matches!(action, Action::WordCount | Action::CheckSyntax);
     let many = args.files.len() > 1;
     let units = job::plan(&args.files, &action, &options.output, &job::new_job_tag());
     install_signal_handlers();
@@ -1265,9 +1324,22 @@ fn dispatch(cli: Cli) -> Result<ExitCode> {
         Command::Scan { run: r } => run(&r, Action::ScanDocuments, json_out),
         Command::Words { run: r } => run(&r, Action::WordCount, json_out),
         Command::Clean { run: r } => run(&r, Action::single(Step::CleanText), json_out),
-        Command::Json { run: r, minify } => {
-            run(&r, Action::single(Step::FormatJson { minify }), json_out)
+        Command::Json {
+            run: r,
+            minify,
+            sort_keys,
+        } => run(
+            &r,
+            Action::single(Step::FormatJson { minify, sort_keys }),
+            json_out,
+        ),
+        Command::Xml { run: r, minify } => {
+            run(&r, Action::single(Step::FormatXml { minify }), json_out)
         }
+        Command::OptimizeSvg { run: r } => run(&r, Action::single(Step::OptimizeSvg), json_out),
+        Command::Check { run: r } => run(&r, Action::CheckSyntax, json_out),
+        Command::DataUri { run: r } => run(&r, Action::DataUri, json_out),
+        Command::Base64 { run: r } => run(&r, Action::Base64, json_out),
         Command::Zip { run: r, password } => {
             let action = match password {
                 Some(p) => Action::ZipLocked { password: p.into() },
@@ -1316,7 +1388,13 @@ fn dispatch(cli: Cli) -> Result<ExitCode> {
         Command::Translate { run: r, to, from } => {
             run(&r, Action::single(Step::Translate { to, from }), json_out)
         }
-        Command::Checksum { run: r } => run(&r, Action::Checksum, json_out),
+        Command::Checksum { run: r, algorithm } => run(
+            &r,
+            Action::Checksum {
+                algorithm: algorithm.kind(),
+            },
+            json_out,
+        ),
         Command::Loadout {
             loadout,
             run: r,

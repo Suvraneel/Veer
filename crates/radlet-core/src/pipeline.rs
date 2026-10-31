@@ -11,8 +11,8 @@ use crate::catalog::{self, Capabilities};
 use crate::engines::image::{self as img, EncodeOptions, Picture, ResizeSpec};
 use crate::engines::media::{self, MediaJob};
 use crate::engines::{
-    anim, archive, data, doc, docpdf, folder, font, iwork, meta, pdf, pdfedit, pdfium, sheet,
-    speech, svg, text, trace, vision,
+    anim, archive, data, devtools, doc, docpdf, folder, font, iwork, meta, pdf, pdfedit, pdfium,
+    sheet, speech, svg, text, trace, vision,
 };
 use crate::error::{Error, Result};
 use crate::format::{self, display_name, Category, Format};
@@ -502,6 +502,8 @@ fn step_name(step: &Step) -> &'static str {
         Step::BlurFaces { .. } => "Hide faces",
         Step::Translate { .. } => "Translate",
         Step::FormatJson { .. } => "Format JSON",
+        Step::FormatXml { .. } => "Format XML",
+        Step::OptimizeSvg => "Optimize SVG",
         Step::RedactText { .. } => "Black out text",
         Step::Trace { .. } => "Trace to SVG",
     }
@@ -1033,16 +1035,52 @@ fn apply(
                 fmt,
             })
         }
-        Step::FormatJson { minify } => {
+        Step::FormatJson { minify, sort_keys } => {
             let (path, fmt) = materialize(state, scratch, caps)?;
             let src = text::read_text(&path)?;
-            let out = data::format_json(&src, *minify)?;
+            let out = if *sort_keys {
+                data::format_json(&devtools::sort_json_keys(&src)?, *minify)?
+            } else {
+                data::format_json(&src, *minify)?
+            };
             if out == src {
                 return Err(Error::NothingToDo(if *minify {
                     "it's already minified".into()
                 } else {
                     "it's already formatted".into()
                 }));
+            }
+            std::fs::write(dst, out)?;
+            Ok(State::File {
+                path: dst.to_path_buf(),
+                fmt,
+            })
+        }
+        Step::FormatXml { minify } => {
+            let (path, fmt) = materialize(state, scratch, caps)?;
+            let src = text::read_text(&path)?;
+            let out = devtools::format_xml(&src, *minify)?;
+            if out == src {
+                return Err(Error::NothingToDo(if *minify {
+                    "it's already minified".into()
+                } else {
+                    "it's already formatted".into()
+                }));
+            }
+            std::fs::write(dst, out)?;
+            Ok(State::File {
+                path: dst.to_path_buf(),
+                fmt,
+            })
+        }
+        Step::OptimizeSvg => {
+            let (path, fmt) = materialize(state, scratch, caps)?;
+            let src = text::read_text(&path)?;
+            let out = devtools::optimize_svg(&src)?;
+            if out.len() >= src.len() {
+                return Err(Error::NothingToDo(
+                    "there's nothing to take out; it's already optimized".into(),
+                ));
             }
             std::fs::write(dst, out)?;
             Ok(State::File {
@@ -1440,19 +1478,104 @@ pub fn copy_text(input: &Path, ctx: &mut Context<'_>) -> Result<Produced> {
     Ok(value(text.trim_end().to_string()))
 }
 
-pub fn checksum(input: &Path, ctx: &mut Context<'_>) -> Result<Produced> {
+pub fn checksum(
+    input: &Path,
+    algorithm: crate::ops::HashKind,
+    ctx: &mut Context<'_>,
+) -> Result<Produced> {
     if input.is_dir() {
         return Err(Error::UnsupportedInput(
             "a folder has no checksum; zip it first".into(),
         ));
     }
-    let value = crate::engines::sha256(input, ctx.cancel)?;
+    let value = devtools::digest(input, algorithm, ctx.cancel)?;
     (ctx.progress)(1.0);
     Ok(Produced {
         output: None,
         outputs: vec![],
         value: Some(value),
     })
+}
+
+/// "Valid JSON", or where the first problem is. Writes nothing.
+pub fn check_syntax(input: &Path, ctx: &mut Context<'_>) -> Result<Produced> {
+    let fmt = format::detect(input)?;
+    if !devtools::checks_syntax(fmt) {
+        return Err(Error::UnsupportedInput(format!(
+            "there's no syntax check for {fmt} files"
+        )));
+    }
+    let value = devtools::check_syntax(&text::read_text(input)?, fmt)?;
+    (ctx.progress)(1.0);
+    Ok(Produced {
+        output: None,
+        outputs: vec![],
+        value: Some(value),
+    })
+}
+
+/// The file as a `data:` URI. Writes nothing.
+pub fn data_uri(input: &Path, ctx: &mut Context<'_>) -> Result<Produced> {
+    let value = devtools::data_uri(input, format::detect(input)?)?;
+    (ctx.progress)(1.0);
+    Ok(Produced {
+        output: None,
+        outputs: vec![],
+        value: Some(value),
+    })
+}
+
+/// Encodes a file as Base64 text beside it ("photo.png.b64"), or decodes
+/// a `.b64` file into the file it holds ("photo.png").
+pub fn base64(input: &Path, ctx: &mut Context<'_>) -> Result<Produced> {
+    if input.is_dir() {
+        return Err(Error::UnsupportedInput(
+            "a folder can't be Base64; zip it first".into(),
+        ));
+    }
+    if std::fs::metadata(input)?.len() > devtools::BASE64_MAX {
+        return Err(Error::UnsupportedInput(
+            "it's over 256 MB, too big for Base64".into(),
+        ));
+    }
+    let dir = ctx.output.dir_for(input);
+    let name = input
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "file".into());
+    let (bytes, desired) = if devtools::is_base64_file(input) {
+        let bytes = devtools::base64_decode(&text::read_text(input)?)?;
+        let stem = input
+            .file_stem()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "decoded".into());
+        // "data.b64" says nothing of what it holds: look at the bytes.
+        let named = if Path::new(&stem).extension().is_some() {
+            stem
+        } else {
+            let ext = format::sniff(&bytes, None)
+                .map(|f| f.extension())
+                .unwrap_or("bin");
+            format!("{stem}.{ext}")
+        };
+        (bytes, dir.join(named))
+    } else {
+        let bytes = std::fs::read(input)?;
+        (
+            devtools::base64_encode(&bytes).into_bytes(),
+            dir.join(format!("{name}.b64")),
+        )
+    };
+    let ext = desired
+        .extension()
+        .map(|e| e.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "bin".into());
+    let tmp = naming::temp_in(&dir, ctx.temp_tag, &ext)?;
+    std::fs::write(tmp.path(), &bytes)?;
+    naming::inherit_permissions(input, tmp.path());
+    let out = naming::publish(tmp.into_temp_path(), &desired)?;
+    (ctx.progress)(1.0);
+    Ok(Produced::one(out))
 }
 
 /// Words and reading time of a document: "1,234 words · 6 min read".

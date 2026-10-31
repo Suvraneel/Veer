@@ -10,7 +10,7 @@ use crate::engines::avmedia;
 use crate::error::Need;
 use crate::format::{Category, Format};
 use crate::ops::{
-    Action, CompressLevel, IconKind, Rect, RedactStyle, SplitMode, Step, TraceDetail,
+    Action, CompressLevel, HashKind, IconKind, Rect, RedactStyle, SplitMode, Step, TraceDetail,
 };
 use crate::recipe::Recipe;
 
@@ -497,6 +497,8 @@ pub fn step_accepts(step: &Step, f: Format, caps: &Capabilities) -> bool {
                 && matches!(f, Txt | Md | Html | Docx | Rtf | Srt | Vtt)
         }
         Step::FormatJson { .. } => f == Json,
+        Step::FormatXml { .. } => matches!(f, Xml | Svg),
+        Step::OptimizeSvg => f == Svg,
         Step::RedactText { .. } => caps.vision.is_some() && f == Pdf,
         Step::Trace { .. } => traces(f, caps),
     }
@@ -1300,19 +1302,83 @@ pub fn wheel(formats: &[Option<Format>], caps: &Capabilities, recipes: &[Recipe]
             None,
         ));
     }
-    if all(&Step::FormatJson { minify: false }) {
+    let json =
+        |minify: bool, sort_keys: bool| Action::single(Step::FormatJson { minify, sort_keys });
+    if all(&Step::FormatJson {
+        minify: false,
+        sort_keys: false,
+    }) {
+        w.tools.push(
+            tool(
+                "format_json",
+                "Format JSON",
+                "curlybraces",
+                json(false, false),
+                None,
+            )
+            .with_variants(vec![
+                variant(
+                    "format_json",
+                    "minify",
+                    "Minify",
+                    "Every space it doesn't need removed",
+                    json(true, false),
+                ),
+                variant(
+                    "format_json",
+                    "sort",
+                    "Sort keys",
+                    "Formatted, every object's keys in alphabetical order",
+                    json(false, true),
+                ),
+            ]),
+        );
+    }
+    let xml = |minify: bool| Action::single(Step::FormatXml { minify });
+    if svgs {
+        w.tools.push(
+            tool(
+                "optimize_svg",
+                "Optimize SVG",
+                "wand.and.rays",
+                Action::single(Step::OptimizeSvg),
+                None,
+            )
+            .with_variants(vec![variant(
+                "optimize_svg",
+                "format",
+                "Format",
+                "Re-indented to read, everything kept",
+                xml(false),
+            )]),
+        );
+    } else if all(&Step::FormatXml { minify: false }) {
+        w.tools.push(
+            tool(
+                "format_xml",
+                "Format XML",
+                "chevron.left.forwardslash.chevron.right",
+                xml(false),
+                None,
+            )
+            .with_variants(vec![variant(
+                "format_xml",
+                "minify",
+                "Minify",
+                "No whitespace between tags, no comments",
+                xml(true),
+            )]),
+        );
+    }
+    if known.as_ref().is_some_and(|k| {
+        k.iter()
+            .all(|&f| crate::engines::devtools::checks_syntax(f))
+    }) {
         w.tools.push(tool(
-            "format_json",
-            "Format JSON",
-            "curlybraces",
-            Action::single(Step::FormatJson { minify: false }),
-            None,
-        ));
-        w.tools.push(tool(
-            "minify_json",
-            "Minify JSON",
-            "arrow.down.right.and.arrow.up.left",
-            Action::single(Step::FormatJson { minify: true }),
+            "check_syntax",
+            "Check syntax",
+            "checkmark.seal",
+            Action::CheckSyntax,
             None,
         ));
     }
@@ -1607,14 +1673,50 @@ pub fn wheel(formats: &[Option<Format>], caps: &Capabilities, recipes: &[Recipe]
             Some("zip_password"),
         ));
     }
-    if !any_folder {
+    if known.as_ref().is_some_and(|k| {
+        k.iter()
+            .all(|&f| crate::engines::devtools::data_uri_type(f).is_some())
+    }) {
         w.tools.push(tool(
-            "checksum",
-            "Copy SHA-256",
-            "number",
-            Action::Checksum,
+            "data_uri",
+            "Copy as data URI",
+            "link",
+            Action::DataUri,
             None,
         ));
+    }
+    if !any_folder {
+        w.tools.push(tool(
+            "base64",
+            "Base64",
+            "doc.plaintext",
+            Action::Base64,
+            None,
+        ));
+        let hash = |algorithm: HashKind| Action::Checksum { algorithm };
+        w.tools.push(
+            tool(
+                "checksum",
+                "Copy SHA-256",
+                "number",
+                Action::checksum(),
+                None,
+            )
+            .with_variants(
+                [HashKind::Md5, HashKind::Sha1, HashKind::Sha512]
+                    .into_iter()
+                    .map(|k| {
+                        variant(
+                            "checksum",
+                            &k.label().to_lowercase().replace('-', ""),
+                            k.label(),
+                            format!("Copy the {} checksum", k.label()),
+                            hash(k),
+                        )
+                    })
+                    .collect(),
+            ),
+        );
     }
 
     // Offer only presets every file can take (a size target on video
@@ -1988,6 +2090,8 @@ mod tests {
                 "combine_pdf",
                 "zip_all",
                 "zip_password",
+                "data_uri",
+                "base64",
                 "checksum"
             ]
         );
@@ -2025,6 +2129,7 @@ mod tests {
                 "copy_text",
                 "privacy_check",
                 "strip_metadata",
+                "base64",
                 "checksum"
             ]
         );
@@ -2075,6 +2180,7 @@ mod tests {
                 "normalize_audio",
                 "privacy_check",
                 "strip_metadata",
+                "base64",
                 "checksum"
             ]
         );
@@ -2094,6 +2200,7 @@ mod tests {
                 "normalize_audio",
                 "privacy_check",
                 "strip_metadata",
+                "base64",
                 "checksum"
             ]
         );
@@ -2228,7 +2335,7 @@ mod tests {
         );
         assert_eq!(labels(&w.tools, "compress"), ["1 MB", "5 MB", "Strong"]);
         assert_eq!(labels(&w.tools, "privacy_check"), ["Remove all"]);
-        assert!(labels(&w.tools, "checksum").is_empty());
+        assert_eq!(labels(&w.tools, "checksum"), ["MD5", "SHA-1", "SHA-512"]);
 
         // One file has nothing to combine; JPEGs alone get smart quality.
         let one = wheel(&[Some(Jpeg)], &caps, &[]);
@@ -2278,7 +2385,7 @@ mod tests {
             .as_array()
             .unwrap()
             .iter()
-            .find(|s| s["id"] == "checksum")
+            .find(|s| s["id"] == "base64")
             .unwrap();
         assert!(checksum.get("variants").is_none());
         let resize = json
@@ -2312,7 +2419,13 @@ mod tests {
         );
         assert_eq!(
             ids(&w.tools),
-            ["word_count", "copy_text", "clean_text", "checksum"]
+            [
+                "word_count",
+                "copy_text",
+                "clean_text",
+                "base64",
+                "checksum"
+            ]
         );
         assert_eq!(w.convert[1].label, "Word");
 
@@ -2328,6 +2441,7 @@ mod tests {
                 "combine_pdf",
                 "zip_all",
                 "zip_password",
+                "base64",
                 "checksum"
             ]
         );
@@ -2432,7 +2546,16 @@ mod tests {
         );
         assert_eq!(
             ids(&w.tools),
-            ["resize", "read_codes", "make_icons", "checksum"]
+            [
+                "resize",
+                "optimize_svg",
+                "check_syntax",
+                "read_codes",
+                "make_icons",
+                "data_uri",
+                "base64",
+                "checksum"
+            ]
         );
         let resize = Step::resize_max(512);
         assert_eq!(step_output(&resize, Svg), Png);
@@ -2474,7 +2597,8 @@ mod tests {
                 "copy_text",
                 "clean_text",
                 "format_json",
-                "minify_json",
+                "check_syntax",
+                "base64",
                 "checksum"
             ]
         );
@@ -2526,7 +2650,7 @@ mod tests {
         let zip = wheel(&[Some(Zip)], &caps, &[]);
         assert_eq!(ids(&zip.convert), ["to_folder"]);
         assert_eq!(zip.convert[0].label, "Unzip");
-        assert_eq!(ids(&zip.tools), ["checksum"]);
+        assert_eq!(ids(&zip.tools), ["base64", "checksum"]);
     }
 
     #[test]
@@ -2555,11 +2679,84 @@ mod tests {
     }
 
     #[test]
+    fn developer_tools_where_they_fit() {
+        let caps = Capabilities::none();
+        let ids = |w: &Wheel| w.tools.iter().map(|s| s.id.clone()).collect::<Vec<_>>();
+        let presets = |w: &Wheel, id: &str| {
+            w.tools
+                .iter()
+                .find(|s| s.id == id)
+                .map(|s| {
+                    s.variants
+                        .iter()
+                        .map(|v| v.label.clone())
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_default()
+        };
+        let json = wheel(&[Some(Json)], &caps, &[]);
+        assert_eq!(presets(&json, "format_json"), ["Minify", "Sort keys"]);
+        let xml = wheel(&[Some(Xml)], &caps, &[]);
+        assert!(ids(&xml).contains(&"format_xml".to_string()));
+        assert_eq!(presets(&xml, "format_xml"), ["Minify"]);
+        let svg = wheel(&[Some(Svg)], &caps, &[]);
+        assert!(
+            !ids(&svg).contains(&"format_xml".to_string()),
+            "SVG gets Optimize instead"
+        );
+        assert_eq!(presets(&svg, "optimize_svg"), ["Format"]);
+        for f in [Yaml, Toml, Csv, Tsv, Json, Xml, Svg] {
+            assert!(
+                ids(&wheel(&[Some(f)], &caps, &[])).contains(&"check_syntax".to_string()),
+                "{f:?}"
+            );
+        }
+        assert!(!ids(&wheel(&[Some(Md)], &caps, &[])).contains(&"check_syntax".to_string()));
+        // Only when every file has one.
+        assert!(
+            !ids(&wheel(&[Some(Json), Some(Md)], &caps, &[])).contains(&"check_syntax".to_string())
+        );
+        for f in [Woff2, Png, Svg] {
+            assert!(
+                ids(&wheel(&[Some(f)], &caps, &[])).contains(&"data_uri".to_string()),
+                "{f:?}"
+            );
+        }
+        assert!(!ids(&wheel(&[Some(Pdf)], &caps, &[])).contains(&"data_uri".to_string()));
+        assert!(!ids(&wheel(&[Some(Folder)], &caps, &[])).contains(&"base64".to_string()));
+        // Steps the editor and loadouts can chain.
+        let sorted = Step::FormatJson {
+            minify: false,
+            sort_keys: true,
+        };
+        assert_eq!(sorted.suffix(), Some("sorted"));
+        assert!(step_accepts(&Step::FormatXml { minify: true }, Svg, &caps));
+        assert!(!step_accepts(&Step::OptimizeSvg, Xml, &caps));
+        let json = serde_json::to_value(Action::single(sorted)).unwrap();
+        assert_eq!(
+            json["steps"][0],
+            serde_json::json!({"op": "format_json", "sort_keys": true})
+        );
+        // A checksum still reads and writes as it always did.
+        assert_eq!(
+            serde_json::to_value(Action::checksum()).unwrap(),
+            serde_json::json!({"kind": "checksum"})
+        );
+        let md5: Action = serde_json::from_str(r#"{"kind":"checksum","algorithm":"md5"}"#).unwrap();
+        assert_eq!(
+            md5,
+            Action::Checksum {
+                algorithm: HashKind::Md5
+            }
+        );
+    }
+
+    #[test]
     fn unknown_files_still_get_checksum() {
         let w = wheel(&[None], &Capabilities::none(), &[]);
         assert!(w.convert.is_empty());
-        assert_eq!(w.tools.len(), 1);
-        assert_eq!(w.tools[0].id, "checksum");
+        let ids: Vec<&str> = w.tools.iter().map(|s| s.id.as_str()).collect();
+        assert_eq!(ids, ["base64", "checksum"]);
     }
 
     #[test]

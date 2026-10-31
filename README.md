@@ -129,9 +129,10 @@ Tools ending in "…" open a window first, with a live preview where it helps.
 | **Audio and video** | **Trim…** · **Make GIF…** · **Save stills** (ten evenly spaced frames) · **Even out volume** (-16 LUFS, as podcasts do) · **Make subtitles…** as SRT, WebVTT or a transcript, with on-device speech recognition · **Join clips** (videos into one MP4, each fitted into the first one's shape, or sound into one M4A) · **Burn in subtitles** (choose a video and its subtitle file; every player shows them) |
 | **Privacy** | **Privacy check…** shows what a file gives away before you share it: GPS location, camera and serial number, names, dates, editing apps, and hidden content such as earlier versions kept inside PDFs. **Remove Metadata** saves cleaned copies. **Hide faces** pixelates, blurs or blacks out every face Vision finds. |
 | **Text and AI** | **Copy text** from pictures and scanned PDFs · **Remove background** to a transparent PNG · **Translate…** documents and subtitles on device (macOS 26), keeping headings, lists, tables and timings · **Read code** (QR codes, and on a Mac barcodes too: EAN, UPC, Code 128, PDF417, Data Matrix, Aztec and more) / **Make QR code** · With Apple Intelligence (macOS 26 on Apple silicon), written on your Mac: **Describe** a picture as alt text for the clipboard, and **Summarize** a document or PDF into `report (summary).md` |
-| **Documents and data** | **Word count** ("1,234 words · 6 min read") · Copy text · **Clean up text** · **Combine into one** · **Format JSON** / **Minify JSON**, keeping key order and numbers exactly · **Combine into workbook** (several tables into one .xlsx, a sheet each) |
+| **Documents and data** | **Word count** ("1,234 words · 6 min read") · Copy text · **Clean up text** · **Combine into one** · **Combine into workbook** (several tables into one .xlsx, a sheet each) |
+| **Developers** | **Format JSON**, with **Minify** and **Sort keys** presets, keeping numbers and strings exactly as written · **Format XML** / Minify, leaving the text inside elements exactly as it was · **Optimize SVG**: editor data (Inkscape, Sketch, Illustrator), metadata, comments, empty groups and whitespace removed, drawing the same pixel for pixel · **Check syntax** for JSON, YAML, TOML, XML, SVG, CSV and TSV: "Valid JSON", or the line and column of the first problem · **Copy as data URI** for pictures, SVGs and fonts (up to 2 MB), ready for CSS or HTML · **Base64**: `photo.png` becomes `photo.png.b64`, and a `.b64` file turns back into what it holds |
 | **Folders** (on copies) | **Zip together** · **Zip with password…** (AES-256) · **Merge folders** (identical files kept once) · **Flatten** · **Sort by kind** · **List contents** (a tree with sizes, or a CSV) · **Find duplicates** |
-| **Everyday** | **Rename…** with a pattern such as `Trip {date} {n}`, previewed first; `{content}` (**What's in it**) names each picture or document by what's in it, such as `Red apple on a table.jpg`, from Apple Intelligence or, without it, the text and things Vision recognises · **Copy path** · **Copy name** · **Open in Terminal** · **Share…** (AirDrop, Mail and Messages as presets) · **Copy image** · Copy SHA-256 |
+| **Everyday** | **Rename…** with a pattern such as `Trip {date} {n}`, previewed first; `{content}` (**What's in it**) names each picture or document by what's in it, such as `Red apple on a table.jpg`, from Apple Intelligence or, without it, the text and things Vision recognises · **Copy path** · **Copy name** · **Open in Terminal** · **Share…** (AirDrop, Mail and Messages as presets) · **Copy image** · Copy SHA-256, with MD5, SHA-1 and SHA-512 as presets |
 
 ### Around the wheel
 
@@ -365,14 +366,19 @@ radlet faces party.jpg --style blur         # Vision; macOS app
 radlet translate notes.md --to fr           # "notes (fr).md"; macOS 26 app
 radlet words essay.docx                     # 1,234 words · 6 min read
 radlet join week1.md week2.md               # "week1 (combined).md"
-radlet json data.json --minify              # or without --minify to re-indent
+radlet json data.json --minify              # or without --minify to re-indent; --sort-keys orders keys
+radlet xml feed.xml                         # re-indent; --minify removes whitespace between tags
+radlet optimize-svg logo.svg                # "logo (optimized).svg", drawing the same
+radlet check config.yaml data.json          # "Valid YAML", or the line and column; exits 1 on a problem
+radlet data-uri icon.svg                    # prints data:image/svg+xml;base64,...
+radlet base64 photo.png                     # photo.png.b64; radlet base64 photo.png.b64 decodes it
 radlet clean notes.txt                      # UTF-8, \n line endings, no trailing spaces
 radlet zip Photos notes.txt                 # Archive.zip; radlet convert Photos --to zip for one each
 RADLET_ZIP_PASSWORD=secret radlet zip Photos # every file locked with AES-256
 radlet unzip Archive.zip                    # RADLET_PASSWORD=secret for a locked one
 radlet merge "Photos 2023" "Photos 2024"    # "Photos 2023 (merged)"
 radlet flatten Downloads                    # or: radlet sort, radlet list --csv, radlet duplicates
-radlet checksum installer.dmg
+radlet checksum installer.dmg               # SHA-256; --algorithm md5, sha1 or sha512
 radlet loadout "Web-ready image" *.png
 radlet shortcut "Resize for Web" *.png     # one of your shortcuts; `radlet shortcuts` lists them
 radlet describe photo.jpg                   # alt text, by Apple Intelligence (macOS 26 app)
@@ -421,7 +427,7 @@ quality = 80
 op = "strip_metadata"
 ```
 
-Steps: `convert {to, quality?}`, `resize {max | percent | width | height}`, `rotate {degrees}`, `crop {rect}`, `redact {rects, style?}`, `strip_metadata`, `compress {level?: light|balanced|strong|smart, target_bytes?}`, `pages {pages, rotate?}`, `page_numbers {position?, style?, start?, size?, skip_first?}`, `watermark {text, opacity?, size?, diagonal?}`, `trim {start?, end?}`, `normalize_audio`, `remove_background {crop?}`, `trace {color?, detail?: low|medium|high}`, `make_searchable`, `transcribe {to?: srt|vtt|txt, language?}`, `blur_faces {style?: pixelate|blur|black}`, `translate {to, from?}`, `redact_text {words?, emails?, phones?, cards?}`, `clean_text`, `format_json {minify?}`. A `rect` is `{x, y, w, h}` in fractions of the picture; times are in seconds. Image steps share one decode and one encode, so chains never compress twice.
+Steps: `convert {to, quality?}`, `resize {max | percent | width | height}`, `rotate {degrees}`, `crop {rect}`, `redact {rects, style?}`, `strip_metadata`, `compress {level?: light|balanced|strong|smart, target_bytes?}`, `pages {pages, rotate?}`, `page_numbers {position?, style?, start?, size?, skip_first?}`, `watermark {text, opacity?, size?, diagonal?}`, `trim {start?, end?}`, `normalize_audio`, `remove_background {crop?}`, `trace {color?, detail?: low|medium|high}`, `make_searchable`, `transcribe {to?: srt|vtt|txt, language?}`, `blur_faces {style?: pixelate|blur|black}`, `translate {to, from?}`, `redact_text {words?, emails?, phones?, cards?}`, `clean_text`, `format_json {minify?, sort_keys?}`, `format_xml {minify?}`, `optimize_svg`. A `rect` is `{x, y, w, h}` in fractions of the picture; times are in seconds. Image steps share one decode and one encode, so chains never compress twice.
 
 You don't have to write TOML: **Save as Loadout…** in a tool window, or **Settings → Loadouts**, writes the file for you. Saving never overwrites another loadout; a name that's taken gets a number. Passwords can't go in a loadout. [examples/loadouts/thumbnail.toml](examples/loadouts/thumbnail.toml) is a starting point.
 
@@ -438,8 +444,8 @@ You don't have to write TOML: **Save as Loadout…** in a tool window, or **Sett
 | `convert`, `compress`, `run_steps` | Any conversion; compressing by level or to a size; chains of the loadout steps above |
 | `combine_into_pdf`, `combine_documents`, `combine_into_workbook` | Several files into one PDF, one document, or one Excel workbook |
 | `split_pdf`, `scan_documents` | PDFs into parts; photos of pages into one searchable PDF |
-| `extract_text`, `count_words`, `read_codes`, `checksum`, `privacy_check` | Reading without writing: text, word counts, QR codes and barcodes, SHA-256, what a file reveals |
-| `make_qr`, `make_icons` | A QR code of some text or a text file; favicon and Xcode icon sets |
+| `extract_text`, `count_words`, `read_codes`, `checksum`, `privacy_check`, `check_syntax`, `data_uri` | Reading without writing: text, word counts, QR codes and barcodes, checksums (SHA-256, MD5, SHA-1, SHA-512), what a file reveals, whether a data file is well formed, data: URIs |
+| `make_qr`, `make_icons`, `base64` | A QR code of some text or a text file; favicon and Xcode icon sets; Base64 encoding and decoding |
 | `convert_folder`, `merge_folders`, `flatten_folders`, `sort_by_kind`, `list_folder_contents`, `find_duplicates`, `zip` | Folders: convert what's inside, merge, flatten, sort, list, find duplicates, zip |
 | `join_clips`, `burn_subtitles`, `extract_frames`, `make_subtitles` | Audio and video (offered when this Mac can do them) |
 | `suggest_names`, `describe_pictures`, `summarize` | A name from what's in a file; alt text and summaries by Apple Intelligence, when it's on |

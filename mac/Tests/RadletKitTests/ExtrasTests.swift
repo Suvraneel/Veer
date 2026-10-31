@@ -62,6 +62,29 @@ final class ExtraActionTests: XCTestCase {
     }
 }
 
+final class DeveloperToolTests: XCTestCase {
+    func testDeveloperStepsDescribeThemselves() {
+        XCTAssertEqual(StepText.describe(.object(["op": .string("format_json"), "sort_keys": .bool(true)])),
+                       "Format JSON, keys sorted")
+        XCTAssertEqual(StepText.describe(.object(["op": .string("format_json"), "minify": .bool(true)])), "Minify JSON")
+        XCTAssertEqual(StepText.describe(.object(["op": .string("format_xml"), "minify": .bool(true)])), "Minify XML")
+        XCTAssertEqual(StepText.describe(.object(["op": .string("format_xml")])), "Format XML")
+        XCTAssertEqual(StepText.describe(.object(["op": .string("optimize_svg")])), "Optimize SVG")
+        XCTAssertTrue(StepText.templates.contains { $0.step["op"]?.string == "optimize_svg" })
+    }
+
+    func testChecksumSlotsNameTheirAlgorithm() {
+        let md5 = Slot(id: "checksum.md5", label: "MD5", symbol: "number", group: "tool",
+                       action: .object(["kind": .string("checksum"), "algorithm": .string("md5")]))
+        XCTAssertEqual(md5.checksumName, "MD5")
+        let plain = Slot(id: "checksum", label: "Copy SHA-256", symbol: "number", group: "tool",
+                         action: .object(["kind": .string("checksum")]))
+        XCTAssertEqual(plain.checksumName, "SHA-256")
+        XCTAssertTrue(Slot(id: "check_syntax", label: "Check syntax", symbol: "checkmark.seal", group: "tool",
+                           action: .object(["kind": .string("check_syntax")])).isCheckSyntax)
+    }
+}
+
 final class WheelLayoutTests: XCTestCase {
     private func slots(_ n: Int) -> [Slot] {
         (0..<n).map { Slot(id: "s\($0)", label: "S\($0)", symbol: "circle", group: "tool", action: .null) }

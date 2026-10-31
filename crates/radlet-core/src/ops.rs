@@ -197,11 +197,25 @@ pub enum Step {
     /// ending (`\n`), no spaces at line ends, one newline at the end.
     CleanText,
     /// Re-indent a JSON file (two spaces), or with `minify` remove every
-    /// space it doesn't need. Keys keep their order.
+    /// space it doesn't need. Keys keep their order, or with `sort_keys`
+    /// every object's keys go in alphabetical order, for stable diffs.
     FormatJson {
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         minify: bool,
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        sort_keys: bool,
     },
+    /// Re-indent an XML or SVG file (two spaces), or with `minify` remove
+    /// the whitespace between tags and the comments. Elements that hold
+    /// text keep it exactly, spaces included.
+    FormatXml {
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        minify: bool,
+    },
+    /// Make an SVG smaller without changing how it looks: editor data
+    /// (Inkscape, Sketch, Illustrator), metadata, comments, empty groups
+    /// and the whitespace between tags go.
+    OptimizeSvg,
     /// Trace a picture into an SVG drawing of filled shapes, for logos,
     /// icons and line art that should stay sharp at any size. `color`
     /// (default) keeps the colours; without it dark areas become black
@@ -329,8 +343,14 @@ impl Step {
             Step::BlurFaces { .. } => Some("faces hidden"),
             // The output is named after the language instead.
             Step::Translate { .. } => Some("translated"),
-            Step::FormatJson { minify: false } => Some("formatted"),
-            Step::FormatJson { minify: true } => Some("minified"),
+            Step::FormatJson { minify: true, .. } => Some("minified"),
+            Step::FormatJson {
+                sort_keys: true, ..
+            } => Some("sorted"),
+            Step::FormatJson { .. } => Some("formatted"),
+            Step::FormatXml { minify: true } => Some("minified"),
+            Step::FormatXml { minify: false } => Some("formatted"),
+            Step::OptimizeSvg => Some("optimized"),
             Step::RedactText { .. } => Some("redacted"),
             Step::Trace { .. } => Some("traced"),
         }
@@ -434,8 +454,22 @@ pub enum Action {
     CombineWorkbook,
     /// Split each selected PDF into several.
     SplitPdf { mode: SplitMode },
-    /// Compute a SHA-256 checksum for every selected file. Writes nothing.
-    Checksum,
+    /// Compute a checksum (SHA-256 unless `algorithm` says otherwise) for
+    /// every selected file. Writes nothing.
+    Checksum {
+        #[serde(default, skip_serializing_if = "HashKind::is_default")]
+        algorithm: HashKind,
+    },
+    /// Check that each JSON, YAML, TOML, XML, SVG, CSV or TSV file is
+    /// well formed: "Valid JSON", or where the first problem is (line and
+    /// column). Writes nothing.
+    CheckSyntax,
+    /// Each picture, SVG or font as a `data:` URI, for the clipboard, to
+    /// paste into CSS or HTML. Writes nothing.
+    DataUri,
+    /// Encode each file as Base64 text (`photo.png.b64`), or decode a
+    /// `.b64` file back into the file it holds.
+    Base64,
     /// The text of every selected document, or the text recognised in an
     /// image or PDF, for the clipboard. Writes nothing.
     CopyText,
@@ -522,6 +556,33 @@ pub enum Action {
     Summarize,
 }
 
+/// A checksum algorithm for [`Action::Checksum`].
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum HashKind {
+    Md5,
+    Sha1,
+    #[default]
+    Sha256,
+    Sha512,
+}
+
+impl HashKind {
+    pub fn is_default(&self) -> bool {
+        *self == HashKind::Sha256
+    }
+
+    /// "SHA-256".
+    pub fn label(self) -> &'static str {
+        match self {
+            HashKind::Md5 => "MD5",
+            HashKind::Sha1 => "SHA-1",
+            HashKind::Sha256 => "SHA-256",
+            HashKind::Sha512 => "SHA-512",
+        }
+    }
+}
+
 /// Which icons [`Action::IconSet`] makes. (A macOS icon is a conversion
 /// to ICNS.)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -573,6 +634,13 @@ impl Action {
         Action::Steps {
             steps: vec![Step::Convert { to, quality: None }],
             label: None,
+        }
+    }
+
+    /// A SHA-256 checksum.
+    pub fn checksum() -> Action {
+        Action::Checksum {
+            algorithm: HashKind::Sha256,
         }
     }
 

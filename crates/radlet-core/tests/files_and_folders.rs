@@ -200,14 +200,23 @@ fn data_files_convert_and_tidy() {
 
     let mini = done(&one(
         &[json.clone()],
-        Action::single(Step::FormatJson { minify: true }),
+        Action::single(Step::FormatJson {
+            minify: true,
+            sort_keys: false,
+        }),
     ));
     assert_eq!(name(&mini), "orders (minified).json");
     assert_eq!(
         std::fs::read_to_string(&mini).unwrap(),
         r#"[{"item":"Tea","qty":2},{"item":"Coffee","qty":10}]"#
     );
-    let again = one(&[json], Action::single(Step::FormatJson { minify: false }));
+    let again = one(
+        &[json],
+        Action::single(Step::FormatJson {
+            minify: false,
+            sort_keys: false,
+        }),
+    );
     assert_eq!(again.status, Status::Skipped, "already formatted");
 
     let notes = dir.path().join("notes.txt");
@@ -223,7 +232,13 @@ fn data_files_convert_and_tidy() {
 
     let bad = dir.path().join("bad.json");
     std::fs::write(&bad, "{\"a\": }").unwrap();
-    let o = one(&[bad], Action::single(Step::FormatJson { minify: false }));
+    let o = one(
+        &[bad],
+        Action::single(Step::FormatJson {
+            minify: false,
+            sort_keys: false,
+        }),
+    );
     assert_eq!(o.status, Status::Failed);
     assert!(o.error.unwrap().message.contains("isn't valid JSON"));
 }
@@ -326,7 +341,7 @@ fn folders_tidy_into_copies() {
         std::fs::read_to_string(f.join("sub/a.txt")).unwrap(),
         "alpha"
     );
-    let sum = one(&[f], Action::Checksum);
+    let sum = one(&[f], Action::checksum());
     assert_eq!(sum.status, Status::Failed);
 }
 

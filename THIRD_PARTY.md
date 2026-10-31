@@ -17,7 +17,9 @@ Radlet's own code is original. It depends on the following open-source component
 | lopdf | Building, merging and cleaning PDFs; text extraction | MIT |
 | flate2 / miniz_oxide | PDF stream compression | MIT OR Apache-2.0 |
 | pulldown-cmark | Reading Markdown | MIT |
-| sha2 | SHA-256 checksums | MIT OR Apache-2.0 |
+| sha2 | SHA-256 and SHA-512 checksums | MIT OR Apache-2.0 |
+| md-5, sha1 | MD5 and SHA-1 checksums | MIT OR Apache-2.0 |
+| base64 | Base64 and data: URIs | MIT OR Apache-2.0 |
 | serde, serde_json, toml | Protocol and recipe formats; JSON and TOML files | MIT OR Apache-2.0 |
 | clap | Command-line parsing | MIT OR Apache-2.0 |
 | tempfile | Temporary files | MIT OR Apache-2.0 |
@@ -31,7 +33,7 @@ Radlet's own code is original. It depends on the following open-source component
 | zip | Making and extracting ZIP archives (with AES encryption); reading Word, PowerPoint and EPUB files | MIT |
 | aes, pbkdf2, hmac, sha1 (through zip) | ZIP passwords | MIT OR Apache-2.0 |
 | lzma-rust2, zstd / zstd-sys (bundles Zstandard), deflate64 (through zip) | LZMA, XZ, Zstandard and Deflate64 ZIP entries | Apache-2.0; BSD-3-Clause; MIT |
-| quick-xml | Reading Word, PowerPoint and EPUB documents, XML and TTML subtitles | MIT |
+| quick-xml | Reading Word, PowerPoint and EPUB documents, XML and TTML subtitles; formatting, checking and optimizing XML and SVG | MIT |
 | csv | Reading and writing CSV and TSV | Unlicense OR MIT |
 | calamine | Reading Excel workbooks | MIT |
 | rust_xlsxwriter | Writing Excel workbooks | MIT OR Apache-2.0 |

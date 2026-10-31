@@ -1735,6 +1735,7 @@ dependencies = [
 name = "radlet-core"
 version = "0.3.0"
 dependencies = [
+ "base64",
  "brotli",
  "calamine",
  "csv",
@@ -1745,6 +1746,7 @@ dependencies = [
  "libc",
  "libwebp-sys",
  "lopdf",
+ "md-5",
  "png 0.18.1",
  "pulldown-cmark",
  "qrcode",
@@ -1755,6 +1757,7 @@ dependencies = [
  "rust_xlsxwriter",
  "serde",
  "serde_json",
+ "sha1",
  "sha2 0.10.9",
  "svg2pdf",
  "tempfile",

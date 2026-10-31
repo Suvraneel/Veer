@@ -105,7 +105,12 @@ public enum StepText {
         case "clean_text":
             return "Clean up text"
         case "format_json":
-            return step["minify"]?.bool == true ? "Minify JSON" : "Format JSON"
+            let base = step["minify"]?.bool == true ? "Minify JSON" : "Format JSON"
+            return step["sort_keys"]?.bool == true ? "\(base), keys sorted" : base
+        case "format_xml":
+            return step["minify"]?.bool == true ? "Minify XML" : "Format XML"
+        case "optimize_svg":
+            return "Optimize SVG"
         case "blur_faces":
             switch step["style"]?.string ?? "pixelate" {
             case "blur": return "Blur faces"
@@ -151,6 +156,8 @@ public enum StepText {
         ("Make subtitles", .object(["op": .string("transcribe"), "to": .string("srt")])),
         ("Clean up text", .object(["op": .string("clean_text")])),
         ("Format JSON", .object(["op": .string("format_json")])),
+        ("Format XML", .object(["op": .string("format_xml")])),
+        ("Optimize SVG", .object(["op": .string("optimize_svg")])),
         ("Hide faces", .object(["op": .string("blur_faces"), "style": .string("pixelate")])),
         ("Translate", .object(["op": .string("translate"), "to": .string("en")])),
     ]

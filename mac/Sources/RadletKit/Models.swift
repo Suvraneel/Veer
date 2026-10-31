@@ -207,6 +207,18 @@ public struct Slot: Codable, Identifiable, Equatable, Sendable {
     }
 
     public var isChecksum: Bool { action["kind"]?.string == "checksum" }
+    /// "SHA-256", or the algorithm this checksum uses.
+    public var checksumName: String {
+        switch action["algorithm"]?.string {
+        case "md5": return "MD5"
+        case "sha1": return "SHA-1"
+        case "sha512": return "SHA-512"
+        default: return "SHA-256"
+        }
+    }
+    /// A syntax check: its verdict is shown, not copied.
+    public var isCheckSyntax: Bool { action["kind"]?.string == "check_syntax" }
+    public var isDataURI: Bool { action["kind"]?.string == "data_uri" }
     public var isCopyText: Bool { action["kind"]?.string == "copy_text" }
     /// Alt text for pictures, for the clipboard.
     public var isDescribe: Bool { action["kind"]?.string == "describe" }

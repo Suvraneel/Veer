@@ -392,6 +392,8 @@ final class AppState: ObservableObject {
         let kind: JobProgress.ValueKind = slot.isCopyText ? .text
             : slot.isDescribe ? .description
             : slot.isReadCodes ? .code
+            : slot.isCheckSyntax ? .check
+            : slot.isDataURI ? .dataURI
             : slot.isWordCount ? .count : .checksum
         Log.app("running \(slot.id) on \(describeFiles(files))\(fromClipboard ? " from the clipboard" : "")")
         // The HUD shows the newest job. Each job also keeps its own record,
@@ -399,9 +401,11 @@ final class AppState: ObservableObject {
         let record = JobProgress()
         record.reset(title: title, total: total)
         record.valueKind = kind
+        record.checksumName = slot.checksumName
         let p = hud.progress
         p.reset(title: title, total: total)
         p.valueKind = kind
+        p.checksumName = slot.checksumName
         p.generation = context.generation
         hudEntry = nil
         hud.show()

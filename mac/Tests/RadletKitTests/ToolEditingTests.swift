@@ -272,6 +272,43 @@ final class JobValueTests: XCTestCase {
         XCTAssertEqual(p.valueKind, .checksum)  // reset forgets the kind
     }
 
+    func testSyntaxChecksShowTheirVerdictWithoutCopying() {
+        let p = JobProgress()
+        p.reset(title: "Check syntax", total: 1)
+        p.valueKind = .check
+        finish(p, 0, "/s/config.json", value: "Valid JSON")
+        p.handle(.jobFinished(Summary(done: 1, skipped: 0, failed: 0, cancelled: 0), cancelled: false))
+        XCTAssertNil(p.clipboardText)
+        XCTAssertEqual(p.detail, "Valid JSON")
+
+        p.reset(title: "Check syntax", total: 3)
+        p.valueKind = .check
+        finish(p, 0, "/s/a.json", value: "Valid JSON")
+        finish(p, 1, "/s/b.yaml", value: "Valid YAML")
+        p.handle(.jobFinished(Summary(done: 2, skipped: 0, failed: 0, cancelled: 0), cancelled: false))
+        XCTAssertEqual(p.detail, "All 2 valid")
+        p.failures = ["c.toml: line 2, column 5: expected a value"]
+        XCTAssertEqual(p.detail, "2 valid · 1 with problems")
+    }
+
+    func testDataURIsAndOtherChecksumsSayWhatWasCopied() {
+        let p = JobProgress()
+        p.reset(title: "Copy as data URI", total: 1)
+        p.valueKind = .dataURI
+        finish(p, 0, "/s/logo.svg", value: "data:image/svg+xml;base64,PHN2Zy8+")
+        p.handle(.jobFinished(Summary(done: 1, skipped: 0, failed: 0, cancelled: 0), cancelled: false))
+        XCTAssertEqual(p.clipboardText, "data:image/svg+xml;base64,PHN2Zy8+")
+        XCTAssertEqual(p.detail, "Data URI copied to the clipboard")
+
+        p.reset(title: "MD5", total: 1)
+        XCTAssertEqual(p.checksumName, "SHA-256")
+        p.checksumName = "MD5"
+        finish(p, 0, "/s/a.dmg", value: String(repeating: "c", count: 32))
+        p.handle(.jobFinished(Summary(done: 1, skipped: 0, failed: 0, cancelled: 0), cancelled: false))
+        XCTAssertEqual(p.detail, "MD5 copied to the clipboard")
+
+    }
+
     func testWordCountsShowAndCopy() {
         let p = JobProgress()
         p.reset(title: "Word count", total: 1)
