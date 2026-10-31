@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
   <url>
     <loc>https://radlet.vercel.app/</loc>
+  </url>
+  <url>
+    <loc>https://radlet.vercel.app/demo/</loc>
+    <video:video>
+      <video:thumbnail_loc>https://radlet.vercel.app/media/poster.jpg</video:thumbnail_loc>
+      <video:title>Radlet in 27 seconds: a weapon wheel for your files</video:title>
+      <video:description>Three HEIC photos are dragged in Finder, Shift is held, and dropping on JPEG saves three JPEGs beside the originals. Then the three wheels, a second ring of presets, and the six skins.</video:description>
+      <video:content_loc>https://radlet.vercel.app/media/demo.mp4</video:content_loc>
+      <video:duration>27</video:duration>
+      <video:publication_date>2026-10-25T05:04:00+05:30</video:publication_date>
+    </video:video>
   </url>
   <url>
     <loc>https://radlet.vercel.app/gallery/</loc>

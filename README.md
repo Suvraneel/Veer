@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://cdn.jsdelivr.net/gh/Suvraneel/radlet@main/.github/media/demo.mp4"><img src=".github/media/demo.gif" alt="Radlet in action: three HEIC photos are dragged in Finder, Shift is held, a wheel of formats opens under the pointer, and dropping on JPEG puts three JPEGs next to the originals" width="100%"></a>
+<a href="https://radlet.vercel.app/demo/"><img src=".github/media/demo.gif" alt="Radlet in action: three HEIC photos are dragged in Finder, Shift is held, a wheel of formats opens under the pointer, and dropping on JPEG puts three JPEGs next to the originals" width="100%"></a>
 
 <h1>Radlet</h1>
 
@@ -8,7 +8,7 @@
 Drag files, hold a key, flick to a tool. Convert, compress, crop, translate and dozens more, without leaving Finder. A free file converter and toolkit for macOS that lives in the menu bar and does all the work on your Mac.</p>
 
 <p>
-  <a href="https://cdn.jsdelivr.net/gh/Suvraneel/radlet@main/.github/media/demo.mp4"><strong>▶ Watch the 20-second demo</strong></a> (with sound)
+  <a href="https://radlet.vercel.app/demo/"><strong>▶ Watch the 27-second demo</strong></a> (with sound)
   &nbsp;·&nbsp;
   <a href="https://radlet.vercel.app"><strong>Website</strong></a>
   &nbsp;·&nbsp;

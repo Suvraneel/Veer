@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Radlet demo: a weapon wheel for your files, in 27 seconds</title>
+<meta name="description" content="Watch Radlet in 27 seconds: drag photos in Finder, hold Shift and drop on JPEG, then the three wheels, a second ring of presets and six skins. A free Mac app; nothing leaves your Mac.">
+<meta name="theme-color" content="#08080a">
+<meta property="og:type" content="video.other">
+<meta property="og:site_name" content="Radlet">
+<meta property="og:title" content="Radlet in 27 seconds">
+<meta property="og:description" content="Drag. Hold Shift. Drop. A free Mac app that puts every file tool on one wheel.">
+<meta property="og:url" content="https://radlet.vercel.app/demo/">
+<meta property="og:image" content="https://radlet.vercel.app/media/poster.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta property="og:video" content="https://radlet.vercel.app/media/demo.mp4">
+<meta property="og:video:type" content="video/mp4">
+<meta property="og:video:width" content="1920">
+<meta property="og:video:height" content="1080">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://radlet.vercel.app/demo/">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- What Google needs to list the video. Keep the clips in step with the chapter list below. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  "name": "Radlet in 27 seconds: a weapon wheel for your files",
+  "description": "A 27-second tour of Radlet, a free Mac app that puts file tools on a weapon wheel. Three HEIC photos are dragged in Finder, Shift is held, and dropping on JPEG saves three JPEGs beside the originals. Then the three wheels (Shift converts, Command opens tools, Control runs loadouts), the Orbit and Bloom styles with a second ring of presets, and the six skins.",
+  "thumbnailUrl": ["https://radlet.vercel.app/media/poster.jpg"],
+  "uploadDate": "2026-10-25T05:04:00+05:30",
+  "duration": "PT27S",
+  "contentUrl": "https://radlet.vercel.app/media/demo.mp4",
+  "inLanguage": "en",
+  "author": { "@type": "Person", "name": "Suvraneel Bhuin", "url": "https://github.com/Suvraneel" },
+  "hasPart": [
+    { "@type": "Clip", "name": "Drag, hold Shift, drop", "startOffset": 3, "endOffset": 8, "url": "https://radlet.vercel.app/demo/?t=3" },
+    { "@type": "Clip", "name": "Three wheels, three keys", "startOffset": 8, "endOffset": 12, "url": "https://radlet.vercel.app/demo/?t=8" },
+    { "@type": "Clip", "name": "A second ring of presets", "startOffset": 12, "endOffset": 18, "url": "https://radlet.vercel.app/demo/?t=12" },
+    { "@type": "Clip", "name": "Six skins, or your own", "startOffset": 18, "endOffset": 22, "url": "https://radlet.vercel.app/demo/?t=18" }
+  ]
+}
+</script>
+<style>
+:root {
+  --bg: #08080a;
+  --text: #ededf0;
+  --muted: #a0a0aa;
+  --dim: #85858f;
+  --hair: rgba(255, 255, 255, 0.07);
+  --hair-2: rgba(255, 255, 255, 0.12);
+  --panel: rgba(255, 255, 255, 0.025);
+  --accent: #4d8dff;
+  --accent-soft: #a9c8ff;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --max: 1200px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 400 16px/1.6 "Geist", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+svg, video { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
+::selection { background: rgba(77, 141, 255, 0.35); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+.atmos { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(90vw 60vh at 50% -18%, rgba(77, 141, 255, 0.10), transparent 70%); }
+.grain { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+main, footer { position: relative; z-index: 2; }
+.wrap { max-width: var(--max); margin: 0 auto; padding: 0 32px; }
+
+/* navigation: a floating pill */
+.nav { position: fixed; z-index: 30; top: 16px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px; padding: 5px 5px 5px 14px; border-radius: 999px;
+  background: rgba(16, 16, 20, 0.7); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: inset 0 0 0 1px var(--hair), 0 24px 48px -32px rgba(0, 0, 0, 0.9); }
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 600; letter-spacing: -0.015em; margin-right: 12px; }
+.brand svg { width: 22px; height: 22px; flex: none; }
+.nav .links { display: flex; gap: 2px; margin-right: 6px; }
+.nav .links a { white-space: nowrap; padding: 8px 12px; border-radius: 999px; font-size: 14px; color: var(--muted); transition: color .5s var(--ease), background-color .5s var(--ease); }
+.nav .links a:hover, .nav .links a[aria-current] { color: var(--text); background: rgba(255, 255, 255, 0.05); }
+
+/* buttons */
+.btn { display: inline-flex; align-items: center; gap: 14px; height: 52px; padding: 0 6px 0 22px; border-radius: 999px; font-weight: 500; font-size: 15px; white-space: nowrap;
+  transition: transform .6s var(--ease), background-color .6s var(--ease), box-shadow .6s var(--ease); }
+.btn:active { transform: scale(0.97); }
+.btn .knob { width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center; transition: transform .6s var(--spring); }
+.btn .knob svg { width: 15px; height: 15px; }
+.btn-primary { background: #f3f3f5; color: #0a0a0c;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(255, 255, 255, 0.08), 0 20px 44px -20px rgba(77, 141, 255, 0.7); }
+.btn-primary:hover { background: #fff; }
+.btn-primary .knob { background: #0a0a0c; color: #fff; }
+.btn-primary:hover .knob { transform: translate(2px, -1px) scale(1.05); }
+.arrow-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 500; transition: color .5s var(--ease); }
+.arrow-link svg { width: 12px; height: 12px; transition: transform .6s var(--spring); }
+.arrow-link:hover { color: var(--text); }
+.arrow-link:hover svg { transform: translate(2px, -2px); }
+
+/* the player: as big as the window allows, always fully in view */
+.watch { padding: 92px 0 0; }
+.player { width: 100%; max-width: calc((100vh - 140px) * 16 / 9); max-width: calc((100dvh - 140px) * 16 / 9); min-width: min(100%, 560px); margin: 0 auto;
+  padding: 7px; border-radius: 30px; background: rgba(255, 255, 255, 0.025); box-shadow: inset 0 0 0 1px var(--hair); }
+.player .core { aspect-ratio: 16 / 9; border-radius: 23px; overflow: hidden; background: #000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 50px 100px -60px rgba(0, 0, 0, 1); }
+.player video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+
+/* about the video */
+.about { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 64px; padding-top: 56px; padding-bottom: 120px; }
+.label { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; font: 500 12px "Geist Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.14em; color: var(--dim); }
+.label::before { content: ""; width: 20px; height: 1px; background: var(--accent); }
+h1 { font-size: clamp(36px, 4.4vw, 60px); line-height: 1; letter-spacing: -0.045em; font-weight: 600; text-wrap: balance; }
+h2 { font: 500 12px "Geist Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.14em; color: var(--dim); margin-bottom: 14px; }
+.lead { margin-top: 22px; font-size: clamp(17px, 1.5vw, 19px); color: var(--muted); max-width: 34em; text-wrap: pretty; }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 0; margin-top: 22px; font: 400 12.5px/1.7 "Geist Mono", ui-monospace, monospace; color: var(--dim); }
+.meta span + span::before { content: "·"; margin: 0 8px; color: rgba(255, 255, 255, 0.2); }
+.cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 34px; }
+.note { margin-top: 14px; font-size: 13.5px; color: var(--dim); }
+
+.chapters { list-style: none; display: grid; gap: 4px; }
+.chapters button { width: 100%; display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px 16px; border-radius: 16px;
+  transition: background-color .5s var(--ease), box-shadow .5s var(--ease); }
+.chapters button:hover { background: rgba(255, 255, 255, 0.035); }
+.chapters button[aria-current="true"] { background: rgba(77, 141, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(77, 141, 255, 0.28); }
+.chapters time { justify-self: start; padding: 3px 9px; border-radius: 999px; font: 500 12px "Geist Mono", ui-monospace, monospace; color: var(--accent-soft);
+  background: rgba(77, 141, 255, 0.1); box-shadow: inset 0 0 0 1px rgba(77, 141, 255, 0.26); }
+.chapters b { display: block; font-weight: 600; font-size: 15.5px; letter-spacing: -0.01em; color: var(--text); }
+.chapters .d { display: block; margin-top: 2px; font-size: 14px; color: var(--muted); }
+
+footer { padding: 0 0 56px; color: var(--dim); font-size: 13px; }
+footer .row { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; padding-top: 28px; box-shadow: inset 0 1px 0 var(--hair); }
+footer nav { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+footer a { transition: color .4s var(--ease); }
+footer a:hover { color: var(--text); }
+
+@media (max-width: 1020px) {
+  .about { grid-template-columns: minmax(0, 1fr); gap: 48px; padding-bottom: 96px; }
+}
+@media (max-width: 760px) {
+  .wrap { padding: 0 16px; }
+  .nav { left: 12px; right: 12px; top: 12px; transform: none; justify-content: space-between; }
+  .brand { margin-right: auto; }
+  .nav .links a:not([aria-current]):not(.keep) { display: none; }
+  .watch { padding-top: 76px; }
+  .player { min-width: 0; padding: 5px; border-radius: 22px; }
+  .player .core { border-radius: 17px; }
+  .about { padding-top: 40px; padding-bottom: 80px; }
+  .chapters button { padding: 12px 10px; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="grain"></div>
+
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <symbol id="mark" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="14" fill="#41455a"/>
+    <path d="M21.36 3.07A14 14 0 0 1 28.93 10.64L22.01 13.51A6.5 6.5 0 0 0 18.49 10Z" fill="#5b9bff"/>
+    <path d="M21.36 3.07 10.64 28.93M28.93 10.64 3.07 21.36M28.93 21.36 3.07 10.64M21.36 28.93 10.64 3.07" stroke="#08080a" stroke-width="1.2"/>
+    <circle cx="16" cy="16" r="6.6" fill="#08080a"/>
+    <circle cx="16" cy="16" r="4.1" fill="#08080a" stroke="#fff" stroke-width="1.9"/>
+  </symbol>
+  <symbol id="out" viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="down" viewBox="0 0 16 16"><path d="M8 2.5v9M4 7.8 8 11.8l4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<nav class="nav" aria-label="Main">
+  <a class="brand" href="../" aria-label="Radlet home"><svg aria-hidden="true"><use href="#mark"/></svg>Radlet</a>
+  <div class="links">
+    <a href="../#features">Features</a>
+    <a href="./" aria-current="page">Demo</a>
+    <a href="../gallery/" class="keep">Gallery</a>
+    <a href="https://github.com/Suvraneel/radlet">GitHub</a>
+  </div>
+</nav>
+
+<main>
+  <section class="watch" aria-label="Video">
+    <div class="wrap">
+      <div class="player">
+        <div class="core">
+          <video id="video" controls playsinline preload="metadata" poster="../media/poster.jpg"
+            aria-label="Radlet in 27 seconds: three photos are dragged in Finder, Shift is held and dropping on JPEG saves three JPEGs; then the three wheels, a second ring of presets, and the six skins">
+            <source src="../media/demo.mp4" type="video/mp4">
+            <source src="https://cdn.jsdelivr.net/gh/Suvraneel/radlet@main/.github/media/demo.mp4" type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap about">
+    <div>
+      <p class="label">Demo</p>
+      <h1>Radlet in 27 seconds.</h1>
+      <p class="lead">Radlet is a free Mac app that puts file tools on a weapon wheel. Here, three HEIC photos are dragged in Finder, Shift is held, and dropping on JPEG saves three JPEGs beside the originals. Then the three wheels, a second ring of presets, and the six skins.</p>
+      <p class="meta"><span>27 seconds</span><span>With sound</span><span><time datetime="2026-10-25">25 October 2026</time></span></p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/Suvraneel/radlet/releases/latest">Download for Mac<span class="knob"><svg aria-hidden="true"><use href="#down"/></svg></span></a>
+        <a class="arrow-link" href="../#top">Try the wheel in your browser<svg aria-hidden="true"><use href="#out"/></svg></a>
+      </div>
+      <p class="note">Free, for macOS 14 or later on Apple silicon and Intel. Nothing you convert leaves your Mac.</p>
+    </div>
+    <div>
+      <h2>In this video</h2>
+      <ol class="chapters">
+        <li><button data-t="0"><time datetime="PT0S">0:00</time><span class="t"><b>A weapon wheel for your files</b><span class="d">The Tools wheel, following the pointer from slot to slot.</span></span></button></li>
+        <li><button data-t="3"><time datetime="PT3S">0:03</time><span class="t"><b>Drag, hold Shift, drop</b><span class="d">Three HEIC photos dragged in Finder become JPEGs next to the originals.</span></span></button></li>
+        <li><button data-t="8"><time datetime="PT8S">0:08</time><span class="t"><b>Three wheels, three keys</b><span class="d">Shift converts, Command opens tools, Control runs your loadouts.</span></span></button></li>
+        <li><button data-t="12"><time datetime="PT12S">0:12</time><span class="t"><b>A second ring of presets</b><span class="d">Orbit and Bloom put presets behind a slot, such as Smart or Best for JPEG.</span></span></button></li>
+        <li><button data-t="18"><time datetime="PT18S">0:18</time><span class="t"><b>Six skins, or your own</b><span class="d">Glass, Instrument, Tactical, Neon, Sunset and Porcelain, or a few lines of CSS.</span></span></button></li>
+      </ol>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap"><div class="row">
+    <span>© 2026 Suvraneel Bhuin. The wheel in the video is drawn by Radlet's own code.</span>
+    <nav aria-label="Footer">
+      <a href="../">Radlet</a>
+      <a href="../gallery/">Gallery</a>
+      <a href="https://github.com/Suvraneel/radlet/releases/latest">Releases</a>
+      <a href="https://github.com/Suvraneel/radlet">Source</a>
+    </nav>
+  </div></div>
+</footer>
+
+<script>
+(() => {
+  const video = document.getElementById('video');
+  const buttons = [...document.querySelectorAll('.chapters button')];
+  const starts = buttons.map(b => Number(b.dataset.t));
+
+  // ?t=12 starts at 12 seconds; the chapter links Google shows use it.
+  const seek = (t) => {
+    const go = () => { video.currentTime = Math.min(t, (video.duration || t + 1) - 0.1); };
+    if (video.readyState >= 1) go(); else video.addEventListener('loadedmetadata', go, { once: true });
+  };
+  const asked = Number(new URLSearchParams(location.search).get('t'));
+  if (asked > 0) seek(asked);
+
+  buttons.forEach(b => b.addEventListener('click', () => {
+    const t = Number(b.dataset.t);
+    seek(t);
+    video.play().catch(() => {});
+    const url = new URL(location.href);
+    if (t) url.searchParams.set('t', String(t)); else url.searchParams.delete('t');
+    history.replaceState(null, '', url);
+  }));
+
+  // Light up the chapter that's playing.
+  const mark = () => {
+    let i = 0;
+    starts.forEach((s, n) => { if (video.currentTime >= s) i = n; });
+    buttons.forEach((b, n) => b.setAttribute('aria-current', String(n === i)));
+  };
+  video.addEventListener('timeupdate', mark);
+  video.addEventListener('seeked', mark);
+  mark();
+})();
+</script>
+</body>
+</html>
