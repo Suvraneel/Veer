@@ -270,10 +270,10 @@ Radlet was called Veer in earlier builds. When it starts, it carries everything 
 
 ### The landing page
 
-`site/` is a single static page, served from two places. **[radlet.vercel.app](https://radlet.vercel.app)** is the canonical address: the page names it in its canonical link and share-card tags, so search engines and link previews use it. **[suvraneel.github.io/radlet](https://suvraneel.github.io/radlet/)** is a mirror.
+`site/` is a static site (the landing page, `/demo/` and `/gallery/`), served from two places. **[radlet.vercel.app](https://radlet.vercel.app)** is the canonical address: the page names it in its canonical link and share-card tags, so search engines and link previews use it. **[suvraneel.github.io/radlet](https://suvraneel.github.io/radlet/)** is a mirror.
 
-- **Vercel:** import the repository and set **Root Directory** to `site`, leaving **Include files outside the root directory in the Build Step** on. `site/vercel.json` copies the demo video and the skins image in from `.github/media` and `docs/images`, so they aren't stored twice.
-- **GitHub Pages:** in the repository's **Settings → Pages**, set **Source** to **GitHub Actions**. `.github/workflows/pages.yml` copies the same two files in and publishes the page on every push to `main` that changes it.
+- **Vercel:** import the repository and set **Root Directory** to `site`, leaving **Include files outside the root directory in the Build Step** on. `site/vercel.json` copies the demo video in from `.github/media`, so it isn't stored twice, and sets the response headers and cache lifetimes.
+- **GitHub Pages:** in the repository's **Settings → Pages**, set **Source** to **GitHub Actions**. `.github/workflows/pages.yml` copies the video in the same way and publishes the site on every push to `main` that changes it (GitHub Pages can't set headers).
 
 **The gallery** (`site/gallery`, at [radlet.vercel.app/gallery](https://radlet.vercel.app/gallery/)) lists loadouts and skins anyone can open in Radlet with one click. Each is a plain file: a `.radletloadout` (the same TOML as the loadouts folder) in `loadouts/`, or a `.radletskin` (the skin's CSS) in `skins/`. To add one, put the file there and list its path in `site/gallery/items.json`. The page reads the files itself, so there's nothing to build. The Rust tests read every loadout as the app would and check the folder and the list match; the Swift tests read every skin with the app's own parser.
 

@@ -37,11 +37,11 @@
 }
 </script>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://api.github.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/geist-1.9.0.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face { font-family: "Geist"; src: url("fonts/geist-1.9.0.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("fonts/geist-mono-1.9.0.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
 :root {
   --bg: #08080a;
   --text: #ededf0;
@@ -162,6 +162,9 @@ p code { font-size: .9em; color: var(--text); }
 /* reveal on scroll */
 .reveal { opacity: 0; transform: translateY(28px); transition: opacity 1.1s var(--ease), transform 1.1s var(--ease); transition-delay: calc(var(--d, 0) * 90ms); }
 .reveal.in { opacity: 1; transform: none; }
+/* The hero's text is the first thing painted, so it rises in without ever being invisible. */
+.hero .text .reveal { opacity: 1; transform: none; transition: none; animation: lift 1s var(--ease) both; animation-delay: calc(var(--d, 0) * 80ms); }
+@keyframes lift { from { transform: translateY(20px); } }
 
 /* ---------- hero ---------- */
 .hero { min-height: 100dvh; display: grid; align-items: center; padding: 136px 0 72px; overflow: hidden; }
@@ -283,7 +286,7 @@ p code { font-size: .9em; color: var(--text); }
 .rows .bad { color: #ff8f86; }
 .rows div.failed { background: rgba(255, 90, 80, 0.05); box-shadow: inset 0 0 0 1px rgba(255, 120, 110, 0.18); }
 .skins-img { margin-top: auto; padding-top: 26px; }
-.skins-img img { width: 100%; border-radius: 14px; box-shadow: 0 0 0 1px var(--hair); }
+.skins-img img { width: 100%; height: auto; border-radius: 14px; box-shadow: 0 0 0 1px var(--hair); }
 /* A small copy of the app's progress window. */
 .hud { margin-top: auto; padding-top: 26px; }
 .hud .top, .hud .foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; font: 500 12px "Geist Mono", monospace; color: var(--muted); }
@@ -608,7 +611,7 @@ footer a:hover { color: var(--text); }
     <div class="wrap">
       <div class="shell video reveal">
         <div class="core">
-          <video id="video" autoplay muted loop playsinline preload="metadata" poster="media/poster.jpg" aria-label="Radlet in 27 seconds: three photos are dragged in Finder, Shift is held and dropping on JPEG saves three JPEGs; then the three wheels, a second ring of presets, and the six skins">
+          <video id="video" muted loop playsinline preload="none" poster="media/poster-768.webp" aria-label="Radlet in 27 seconds: three photos are dragged in Finder, Shift is held and dropping on JPEG saves three JPEGs; then the three wheels, a second ring of presets, and the six skins">
             <source src="media/demo.mp4" type="video/mp4">
             <source src="https://cdn.jsdelivr.net/gh/Suvraneel/radlet@main/.github/media/demo.mp4" type="video/mp4">
           </video>
@@ -720,7 +723,7 @@ footer a:hover { color: var(--text); }
         <div class="panel t-d reveal">
           <h3>Six skins, or your own</h3>
           <p>Glass, Instrument, Tactical, Neon, Sunset and Porcelain, or write your own in a few lines of CSS and share it as a link. Pick Orbit or Bloom for a second ring of presets.</p>
-          <div class="skins-img"><img src="media/skins.png" alt="The wheel in six skins: Glass, Instrument, Tactical, Neon, Sunset and Porcelain" loading="lazy" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/Suvraneel/radlet@main/docs/images/skins.png'"></div>
+          <div class="skins-img"><img src="media/skins.webp" width="1280" height="839" alt="The wheel in six skins: Glass, Instrument, Tactical, Neon, Sunset and Porcelain" loading="lazy" decoding="async"></div>
         </div>
         <div class="panel t-e reveal" style="--d: 1">
           <h3>One damaged file fails alone</h3>
@@ -1140,15 +1143,27 @@ footer a:hover { color: var(--text); }
     play.setAttribute('aria-label', video.paused ? 'Play' : 'Pause');
     play.querySelector('svg').innerHTML = video.paused ? icons.play : icons.pause;
   };
-  // With reduced motion, the video waits to be played.
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { video.removeAttribute('autoplay'); video.pause(); }
+  // The video (18 MB) isn't fetched until it's on screen, so a phone that
+  // never scrolls down never downloads it. It plays while it's in view,
+  // unless the visitor paused it or asked for reduced motion; the small
+  // poster is swapped for the full one on larger screens.
+  if (matchMedia('(min-width: 761px)').matches) video.poster = 'media/poster.webp';
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let held = calm;
+  new IntersectionObserver(([e]) => {
+    if (e.isIntersecting) { if (!held) video.play().catch(() => {}); }
+    else if (!video.paused) video.pause();
+  }, { threshold: 0.2 }).observe(video);
   video.addEventListener('play', showPlaying);
   video.addEventListener('pause', showPlaying);
   showPlaying();
-  play.addEventListener('click', () => { if (video.paused) video.play(); else video.pause(); });
+  play.addEventListener('click', () => {
+    held = !video.paused;
+    if (video.paused) video.play(); else video.pause();
+  });
   sound.addEventListener('click', () => {
     video.muted = !video.muted;
-    if (!video.muted) { video.currentTime = 0; video.play(); }
+    if (!video.muted) { held = false; video.currentTime = 0; video.play(); }
     sound.setAttribute('aria-pressed', String(!video.muted));
     sound.setAttribute('aria-label', video.muted ? 'Turn sound on' : 'Turn sound off');
     sound.querySelector('svg').innerHTML = video.muted ? icons.muted : icons.loud;
