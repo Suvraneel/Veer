@@ -24,13 +24,13 @@
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Radlet",
-  "description": "A weapon wheel for your files: convert, compress, crop, translate and dozens more without leaving Finder. Everything runs on your Mac.",
+  "description": "A weapon wheel for your files: convert, compress, crop, translate, trace pictures into SVG, format JSON and dozens more without leaving Finder. Everything runs on your Mac.",
   "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "macOS 14 or later",
-  "softwareVersion": "0.1.0",
+  "softwareVersion": "0.4.0",
   "url": "https://radlet.vercel.app/",
-  "downloadUrl": "https://github.com/Suvraneel/Radlet/releases/download/v0.1.0/Radlet-0.1.0.dmg",
-  "fileSize": "25MB",
+  "downloadUrl": "https://github.com/Suvraneel/Radlet/releases/download/v0.4.0/Radlet-0.4.0.dmg",
+  "fileSize": "35MB",
   "image": "https://radlet.vercel.app/og.jpg",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "author": { "@type": "Person", "name": "Suvraneel Bhuin", "url": "https://github.com/Suvraneel" }
@@ -92,7 +92,7 @@ main, footer { position: relative; z-index: 2; }
 .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; letter-spacing: -0.015em; margin-right: 12px; }
 .brand svg { width: 22px; height: 22px; }
 .nav .links { display: flex; gap: 2px; margin-right: 6px; }
-.nav .links a { padding: 8px 12px; border-radius: 999px; font-size: 14px; color: var(--muted); transition: color .5s var(--ease), background-color .5s var(--ease); }
+.nav .links a { white-space: nowrap; padding: 8px 12px; border-radius: 999px; font-size: 14px; color: var(--muted); transition: color .5s var(--ease), background-color .5s var(--ease); }
 .nav .links a:hover { color: var(--text); background: rgba(255, 255, 255, 0.05); }
 .menu-btn { display: none; width: 38px; height: 38px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); position: relative; }
 .menu-btn span { position: absolute; left: 12px; right: 12px; height: 1.5px; background: var(--text); border-radius: 2px; transition: transform .55s var(--ease); }
@@ -112,6 +112,7 @@ main, footer { position: relative; z-index: 2; }
 .overlay a:nth-child(5) { transition-delay: .2s; }
 .overlay a:nth-child(6) { transition-delay: .25s; }
 .overlay a:nth-child(7) { transition-delay: .3s; }
+.overlay a:nth-child(8) { transition-delay: .35s; }
 
 /* ---------- buttons ---------- */
 .btn { display: inline-flex; align-items: center; gap: 14px; height: 52px; padding: 0 6px 0 22px; border-radius: 999px; font-weight: 500; font-size: 15px; letter-spacing: -0.005em; white-space: nowrap;
@@ -141,7 +142,7 @@ main, footer { position: relative; z-index: 2; }
 
 /* ---------- type and shared pieces ---------- */
 section { padding: 120px 0; position: relative; }
-section[id] { scroll-margin-top: 88px; }
+section[id], #developers { scroll-margin-top: 88px; }
 h2 { font-size: clamp(36px, 5vw, 64px); line-height: 1; letter-spacing: -0.04em; font-weight: 600; text-wrap: balance; }
 h3 { font-size: 19px; letter-spacing: -0.02em; font-weight: 600; line-height: 1.3; }
 .lead { font-size: clamp(17px, 1.5vw, 19px); color: var(--muted); max-width: 33em; text-wrap: pretty; }
@@ -259,6 +260,8 @@ p code { font-size: .9em; color: var(--text); }
 .bento p { color: var(--muted); font-size: 15px; margin-top: 8px; max-width: 34em; }
 .t-a { grid-column: span 7; grid-row: span 2; }
 .t-b, .t-c { grid-column: span 5; }
+.t-f { grid-column: span 5; }
+.t-g { grid-column: span 7; }
 .t-d { grid-column: span 7; }
 .t-e { grid-column: span 5; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 22px; }
@@ -366,7 +369,7 @@ footer { padding: 0 0 56px; color: var(--dim); font-size: 13px; }
 footer .row { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; padding-top: 28px; box-shadow: inset 0 1px 0 var(--hair); }
 footer .left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 footer .left svg { width: 18px; height: 18px; }
-footer nav { display: flex; gap: 22px; }
+footer nav { display: flex; flex-wrap: wrap; gap: 8px 22px; }
 footer a { transition: color .4s var(--ease); }
 footer a:hover { color: var(--text); }
 
@@ -405,8 +408,72 @@ footer a:hover { color: var(--text); }
 .get .phone p { color: var(--muted); margin-top: 12px; }
 .get .phone .btn { margin-top: 26px; }
 
+/* ---------- what's new, above the headline ---------- */
+.eyebrow { display: inline-flex; align-items: center; gap: 10px; max-width: 100%; margin-bottom: 28px; padding: 4px 4px 4px 4px; border-radius: 999px; font-size: 13.5px; color: var(--muted);
+  background: rgba(255, 255, 255, 0.035); box-shadow: inset 0 0 0 1px var(--hair-2); transition: color .5s var(--ease), background-color .5s var(--ease); }
+.eyebrow b { flex: none; padding: 4px 10px; border-radius: 999px; font: 500 11px "Geist Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.12em; color: #d6e5ff;
+  background: rgba(77, 141, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(77, 141, 255, 0.34); }
+.eyebrow .go { flex: none; width: 26px; height: 26px; border-radius: 999px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.06); transition: transform .6s var(--spring), background-color .5s var(--ease); }
+.eyebrow .go svg { width: 11px; height: 11px; }
+.eyebrow:hover { color: var(--text); background: rgba(255, 255, 255, 0.055); }
+.eyebrow:hover .go { transform: translateX(2px) scale(1.06); background: rgba(255, 255, 255, 0.1); }
+
+/* ---------- numbers ---------- */
+#numbers { padding: 8px 0 0; }
+.stats .core { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.stat { padding: 34px 32px 30px; }
+.stat + .stat { box-shadow: inset 1px 0 0 var(--hair); }
+.stat b { display: block; font-size: clamp(40px, 4.6vw, 60px); line-height: 1; letter-spacing: -0.05em; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat b i { font-style: normal; color: var(--accent-soft); }
+.stat > span { display: block; margin-top: 12px; font-size: 14.5px; color: var(--muted); }
+.stats-note { margin-top: 16px; padding: 0 8px; font-size: 13px; color: var(--dim); }
+
+/* ---------- pictures into SVG ---------- */
+.trace { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 12px; margin-top: auto; padding-top: 26px; }
+.trace figure { display: grid; justify-items: center; gap: 12px; padding: 22px 12px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.025); box-shadow: inset 0 0 0 1px var(--hair); }
+.trace svg { width: 76px; height: 76px; }
+.trace figcaption { font: 500 12px/1.5 "Geist Mono", ui-monospace, monospace; color: var(--muted); text-align: center; }
+.trace figcaption b { display: block; color: var(--text); font-weight: 500; }
+.trace .via { font: 500 11px "Geist Mono", ui-monospace, monospace; color: var(--dim); text-align: center; }
+.trace .via svg { width: 16px; height: 16px; margin: 0 auto 6px; color: var(--accent-soft); }
+.trace .vec svg { transform: scale(.82); opacity: 0; transition: transform 1.1s var(--spring) .45s, opacity .8s var(--ease) .45s; }
+.in .trace .vec svg { transform: none; opacity: 1; }
+
+/* ---------- formats ---------- */
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-top: 28px; font-size: 13.5px; color: var(--dim); }
+.legend > span { display: inline-flex; align-items: center; gap: 9px; }
+.fmt-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 56px; }
+.fmt { padding: 28px; display: flex; flex-direction: column; }
+.fmt p { color: var(--muted); font-size: 14.5px; margin-top: 8px; }
+.fmt .chips { padding-top: 20px; }
+.chips span.ro, .chip.ro { color: var(--muted); background: transparent; box-shadow: none; border: 1px dashed rgba(255, 255, 255, 0.2); padding: 4px 9px; }
+.chips span.wo, .chip.wo { color: var(--accent-soft); background: transparent; box-shadow: none; border: 1px dashed rgba(77, 141, 255, 0.5); padding: 4px 9px; }
+.chip { font: 500 12px "Geist Mono", monospace; padding: 5px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.035); box-shadow: inset 0 0 0 1px var(--hair); color: #c9c9d3; }
+
+/* ---------- privacy ---------- */
+.vs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 64px; align-items: stretch; }
+.vs .side { padding: 36px; height: 100%; }
+.vs .core.side::before { content: ""; position: absolute; inset: -40% -20% auto auto; width: 70%; aspect-ratio: 1; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(77, 141, 255, 0.16), transparent 70%); }
+.vs .shell { height: 100%; }
+.vs h3 { font-size: 22px; }
+.vs .how { margin-top: 6px; font: 500 12px "Geist Mono", ui-monospace, monospace; color: var(--dim); letter-spacing: 0.02em; }
+.vs ul { list-style: none; margin-top: 26px; position: relative; }
+.vs li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; padding: 14px 0; box-shadow: inset 0 1px 0 var(--hair); font-size: 15px; color: var(--muted); }
+.vs li svg { width: 16px; height: 16px; margin-top: 3px; }
+.vs .them li svg { color: var(--dim); }
+.vs .us li { color: #d0d0da; }
+.vs .us li svg { color: var(--ok); }
+.vs-note { margin-top: 22px; padding: 0 8px; font-size: 13.5px; color: var(--dim); max-width: 46em; }
+.vs-note a { color: var(--muted); text-decoration: underline; text-decoration-color: rgba(255, 255, 255, 0.25); text-underline-offset: 3px; }
+
 /* ---------- small screens ---------- */
 @media (max-width: 1020px) {
+  .fmt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats .core { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat:nth-child(3) { box-shadow: inset 0 1px 0 var(--hair); }
+  .stat:nth-child(4) { box-shadow: inset 1px 0 0 var(--hair), inset 0 1px 0 var(--hair); }
+  .vs { grid-template-columns: minmax(0, 1fr); }
   .hero-grid, .split, #agents .split, .faq-grid { grid-template-columns: minmax(0, 1fr); gap: 56px; }
   #agents .split > .code { order: 2; }
   .faq-grid .sticky { position: static; }
@@ -416,12 +483,15 @@ footer a:hover { color: var(--text); }
   section { padding: 96px 0; }
   .hero .text { max-width: 640px; }
 }
-@media (max-width: 760px) {
-  .wrap { padding: 0 16px; }
+/* The nav's links stop fitting a little before phone widths. */
+@media (max-width: 900px) {
   .nav { left: 12px; right: 12px; top: 12px; transform: none; justify-content: space-between; padding-left: 14px; }
   .nav .links { display: none; }
   .brand { margin-right: auto; }
   .menu-btn { display: block; margin-left: 4px; }
+}
+@media (max-width: 760px) {
+  .wrap { padding: 0 16px; }
   .hero { padding: 112px 0 40px; min-height: auto; }
   .hero h1 { margin-bottom: 22px; }
   .hero .cta { margin-top: 32px; }
@@ -437,6 +507,13 @@ footer a:hover { color: var(--text); }
   .vctl { right: 10px; bottom: 10px; gap: 6px; }
   .vbtn { width: 34px; height: 34px; }
   .rows div { font-size: 11.5px; padding: 10px 12px; }
+  .fmt-grid { grid-template-columns: minmax(0, 1fr); }
+  .fmt { padding: 24px; }
+  .stat { padding: 26px 20px 24px; }
+  .vs .side { padding: 26px 22px; }
+  .eyebrow { font-size: 13px; }
+  .trace figure { padding: 18px 8px 12px; }
+  .trace svg { width: 60px; height: 60px; }
   .get .core { padding: 28px 22px 22px; }
   .final { padding: 136px 0 120px; }
   section { padding: 88px 0; }
@@ -464,24 +541,29 @@ footer a:hover { color: var(--text); }
   </symbol>
   <symbol id="down" viewBox="0 0 16 16"><path d="M8 2.5v9M4 7.8 8 11.8l4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="out" viewBox="0 0 16 16"><path d="M5 11 11 5M6 5h5v5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="right" viewBox="0 0 16 16"><path d="M3 8h9.5M8.6 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="yes" viewBox="0 0 16 16"><path d="M3.2 8.4l3 3 6.6-7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="no" viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
 </svg>
 
 <nav class="nav" aria-label="Main">
   <a class="brand" href="#top" aria-label="Radlet home"><svg aria-hidden="true"><use href="#mark"/></svg>Radlet</a>
   <div class="links">
     <a href="#features">Features</a>
+    <a href="#formats">Formats</a>
     <a href="#loadouts">Loadouts</a>
     <a href="gallery/">Gallery</a>
     <a href="#agents">CLI &amp; agents</a>
     <a href="#faq">FAQ</a>
     <a href="https://github.com/Suvraneel/radlet">GitHub</a>
   </div>
-  <a class="btn btn-primary btn-small" data-download href="https://github.com/Suvraneel/Radlet/releases/download/v0.1.0/Radlet-0.1.0.dmg">Download<span class="knob"><svg aria-hidden="true"><use href="#down"/></svg></span></a>
+  <a class="btn btn-primary btn-small" data-download href="https://github.com/Suvraneel/Radlet/releases/download/v0.4.0/Radlet-0.4.0.dmg">Download<span class="knob"><svg aria-hidden="true"><use href="#down"/></svg></span></a>
   <button class="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
 </nav>
 <div class="overlay" id="menu" inert>
   <a href="#demo">Demo</a>
   <a href="#features">Features</a>
+  <a href="#formats">Formats</a>
   <a href="#loadouts">Loadouts</a>
   <a href="gallery/">Gallery</a>
   <a href="#agents">CLI &amp; agents</a>
@@ -494,14 +576,15 @@ footer a:hover { color: var(--text); }
   <section class="hero">
     <div class="wrap hero-grid">
       <div class="text">
-        <h1 class="reveal">A weapon wheel for your files.</h1>
-        <p class="lead reveal" style="--d: 1">A free file converter and toolkit for your Mac. Drag files in Finder, hold a key, flick to a tool: convert, compress, crop, translate and dozens more, right where your files already are.</p>
-        <div class="cta reveal" style="--d: 2">
-          <a class="btn btn-primary" data-download href="https://github.com/Suvraneel/Radlet/releases/download/v0.1.0/Radlet-0.1.0.dmg">Download for Mac<span class="knob"><svg aria-hidden="true"><use href="#down"/></svg></span></a>
+        <a class="eyebrow reveal" href="#developers"><b>New in 0.4</b>Developer tools on the wheel<span class="go"><svg aria-hidden="true"><use href="#right"/></svg></span></a>
+        <h1 class="reveal" style="--d: 1">A weapon wheel for your files.</h1>
+        <p class="lead reveal" style="--d: 2">A free file converter and toolkit for your Mac. Drag files in Finder, hold a key, flick to a tool: convert, compress, crop, translate and dozens more, right where your files already are.</p>
+        <div class="cta reveal" style="--d: 3">
+          <a class="btn btn-primary" data-download href="https://github.com/Suvraneel/Radlet/releases/download/v0.4.0/Radlet-0.4.0.dmg">Download for Mac<span class="knob"><svg aria-hidden="true"><use href="#down"/></svg></span></a>
           <a class="tlink" href="#demo"><span class="ring"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 2.2v7.6L10 6z" fill="currentColor"/></svg></span>Watch the demo <small>0:20</small></a>
         </div>
-        <p class="meta mac-only reveal" style="--d: 3"><span>Version <span data-version>0.1.0</span></span><span data-size>25 MB</span><span>Apple silicon and Intel</span><span>macOS 14+</span></p>
-        <p class="meta phone-only reveal" style="--d: 3">Radlet runs on Macs with macOS 14 or later.</p>
+        <p class="meta mac-only reveal" style="--d: 4"><span>Version <span data-version>0.4.0</span></span><span data-size>35 MB</span><span>Apple silicon and Intel</span><span>macOS 14+</span></p>
+        <p class="meta phone-only reveal" style="--d: 4">Radlet runs on Macs with macOS 14 or later.</p>
       </div>
 
       <div class="instrument reveal" style="--d: 2">
@@ -539,6 +622,19 @@ footer a:hover { color: var(--text); }
     </div>
   </section>
 
+  <!-- Numbers -->
+  <section id="numbers" aria-label="Radlet in numbers">
+    <div class="wrap">
+      <div class="shell stats reveal"><div class="core">
+        <div class="stat"><b><span data-count="500">500</span><i>+</i></b><span>conversions between formats</span></div>
+        <div class="stat"><b><span data-count="65">65</span><i>+</i></b><span>kinds of file it opens</span></div>
+        <div class="stat"><b><span data-count="55">55</span><i>+</i></b><span>tools across three wheels</span></div>
+        <div class="stat"><b>0</b><span>uploads, accounts or limits</span></div>
+      </div></div>
+      <p class="stats-note reveal" style="--d: 1">Counted from the engine's own catalog, with FFmpeg and Apple's free apps installed.</p>
+    </div>
+  </section>
+
   <!-- Three keys -->
   <section>
     <div class="wrap split">
@@ -549,9 +645,9 @@ footer a:hover { color: var(--text); }
         <p class="aside reveal" style="--d: 3">No drag needed: select files and press <kbd>⌃⌥V</kbd> in Finder, or right-click and choose Services.</p>
       </div>
       <div class="shell board reveal" style="--d: 1"><div class="core">
-        <div class="keyrow" data-key="Shift"><span class="cap" style="--w: 180px" aria-hidden="true"><span class="g">⇧</span><span class="w">shift</span></span><div><h3>Convert</h3><p>JPEG, PNG, WebP, PDF, Word, Excel, MP4, MP3 and more. Results land next to the originals.</p></div></div>
-        <div class="keyrow" data-key="Meta"><span class="cap" style="--w: 124px" aria-hidden="true"><span class="g">⌘</span><span class="w">command</span></span><div><h3>Tools</h3><p>Crop, compress, redact, hide faces, translate, make icons, read QR codes, share.</p></div></div>
-        <div class="keyrow" data-key="Control"><span class="cap" style="--w: 96px" aria-hidden="true"><span class="g">⌃</span><span class="w">control</span></span><div><h3>Loadouts</h3><p>Your saved sets of steps, like “Web-ready image”, one flick away.</p></div></div>
+        <div class="keyrow" data-key="Shift"><span class="cap" style="--w: 180px" aria-hidden="true"><span class="g">⇧</span><span class="w">shift</span></span><div><h3>Convert</h3><p>JPEG, PNG, PDF, Word, Excel, MP4, MP3, even pictures into SVG drawings. Results land next to the originals.</p></div></div>
+        <div class="keyrow" data-key="Meta"><span class="cap" style="--w: 124px" aria-hidden="true"><span class="g">⌘</span><span class="w">command</span></span><div><h3>Tools</h3><p>Compress, crop, redact, hide faces, translate, describe, format JSON, read QR codes, share.</p></div></div>
+        <div class="keyrow" data-key="Control"><span class="cap" style="--w: 96px" aria-hidden="true"><span class="g">⌃</span><span class="w">control</span></span><div><h3>Loadouts</h3><p>Your saved sets of steps, like “Web-ready image”, and your own shortcuts, one flick away.</p></div></div>
       </div></div>
     </div>
   </section>
@@ -566,15 +662,16 @@ footer a:hover { color: var(--text); }
       <div class="bento">
         <div class="panel t-a reveal">
           <h3>Convert almost anything</h3>
-          <p>Images, PDFs, documents, spreadsheets, audio, video, subtitles, SVGs, icons and archives. Documents keep their headings, lists, tables and links. Drop a whole folder for “Images to JPEG” or “Documents to PDF”.</p>
+          <p>Images, PDFs, documents, e-books, spreadsheets, data, audio, video, subtitles, fonts and archives. Documents keep their headings, lists, tables and links. The formats you'd pick come first, and the rest wait under More. Drop a whole folder for “Images to JPEG” or “Documents to PDF”.</p>
           <div class="rows" aria-hidden="true">
             <div>IMG_2041.HEIC <span class="arrow">→</span> <span class="to">IMG_2041.jpg</span><span class="tag ok">✓</span></div>
-            <div>notes.md <span class="arrow">→</span> <span class="to">notes.docx</span><span class="tag ok">✓</span></div>
+            <div>contract.pdf <span class="arrow">→</span> <span class="to">contract.docx</span><span class="tag ok">✓</span></div>
             <div>orders.csv <span class="arrow">→</span> <span class="to">orders.xlsx</span><span class="tag ok">✓</span></div>
+            <div>logo.png <span class="arrow">→</span> <span class="to">logo.svg</span><span class="tag ok">✓</span></div>
             <div>Trip/ <span class="arrow">→</span> <span class="to">Trip (JPEG)/</span><span class="tag ok">✓</span></div>
           </div>
           <div class="chips">
-            <span class="hot">HEIC → JPEG</span><span>PNG</span><span>WebP</span><span>AVIF</span><span class="hot">Markdown → Word</span><span>PDF</span><span>RTF</span><span class="hot">CSV → Excel</span><span>JSON</span><span>MP4</span><span>MOV</span><span>MP3</span><span>FLAC</span><span>SRT</span><span>SVG</span><span>ICNS</span><span>ZIP</span>
+            <span class="hot">HEIC → JPEG</span><span>PNG</span><span>WebP</span><span>AVIF</span><span class="hot">PDF → Word</span><span>Markdown</span><span>EPUB</span><span class="hot">CSV → Excel</span><span>YAML</span><span>MP4</span><span>MOV</span><span>MP3</span><span>FLAC</span><span>SRT</span><span class="hot">PNG → SVG</span><span>ICNS</span><span>WOFF2</span><span>ZIP</span>
           </div>
         </div>
         <div class="panel t-b reveal" style="--d: 1">
@@ -586,12 +683,43 @@ footer a:hover { color: var(--text); }
           </div>
         </div>
         <div class="panel t-c reveal" style="--d: 2">
-          <h3>Text, faces and backgrounds, on device</h3>
-          <p>Copy text from pictures, remove backgrounds, hide faces, make subtitles and translate documents, with Apple's own frameworks.</p>
+          <h3>Apple Intelligence and Vision, on this Mac</h3>
+          <p>Describe a picture as alt text, summarize a document, name files by what's in them, copy text from pictures, remove backgrounds, hide faces and translate, all with Apple's on-device frameworks.</p>
+          <div class="rows" aria-hidden="true">
+            <div>IMG_0412.jpg <span class="arrow">→</span> <span class="to">Red apple on a table.jpg</span></div>
+            <div>report.pdf <span class="arrow">→</span> <span class="to">report (summary).md</span></div>
+          </div>
+        </div>
+        <div class="panel t-f reveal">
+          <h3>Pictures into SVG drawings</h3>
+          <p>Logos, icons and line art are traced into filled shapes that stay sharp at any size. SVGs go the other way too, drawn crisp at 1×, 2× or 4×.</p>
+          <div class="trace" aria-hidden="true">
+            <figure>
+              <svg viewBox="0 0 32 32" shape-rendering="crispEdges"><path fill="#41455a" d="M10 2h12v2h-12zM6 4h14v2h-14zM4 6h16v2h-16zM4 8h14v2h-14zM2 10h10v2h-10zM28 10h2v2h-2zM2 12h8v2h-8zM24 12h6v2h-6zM2 14h8v2h-8zM22 14h8v2h-8zM2 16h8v2h-8zM22 16h8v2h-8zM2 18h8v2h-8zM22 18h8v2h-8zM2 20h10v2h-10zM20 20h10v2h-10zM4 22h24v2h-24zM4 24h24v2h-24zM6 26h20v2h-20zM10 28h12v2h-12z"/><path fill="#5b9bff" d="M20 4h6v2h-6zM20 6h8v2h-8zM18 8h10v2h-10zM20 10h8v2h-8zM22 12h2v2h-2z"/><path fill="#fff" d="M14 10h4v2h-4zM12 12h8v2h-8zM10 14h4v2h-4zM18 14h4v2h-4zM10 16h4v2h-4zM18 16h4v2h-4zM12 18h8v2h-8zM14 20h4v2h-4z"/></svg>
+              <figcaption>logo.png <b>16 px</b></figcaption>
+            </figure>
+            <div class="via"><svg><use href="#right"/></svg>trace</div>
+            <figure class="vec">
+              <svg viewBox="0 0 32 32"><use href="#mark"/></svg>
+              <figcaption>logo.svg <b>any size</b></figcaption>
+            </figure>
+          </div>
+          <div class="chips"><span>Colour</span><span>Black and white</span><span>Simple</span><span>Detailed</span></div>
+        </div>
+        <div class="panel t-g reveal" style="--d: 1" id="developers">
+          <h3>Developer tools</h3>
+          <p>Format or minify JSON and XML, sort keys, optimize SVGs, check syntax down to the line and column, copy a data URI, Base64 and checksums. A file whose name doesn't match what's inside gets “Rename to .jpg” first on the wheel.</p>
+          <div class="rows" aria-hidden="true">
+            <div>config.yaml<span class="tag ok">✓ Valid YAML</span></div>
+            <div class="failed">data.json<span class="tag bad">line 14, column 3</span></div>
+            <div>icon.svg <span class="arrow">→</span> <span class="to">optimized</span><span class="tag ok">9.6 → 2.1 KB</span></div>
+            <div>photo.png <span class="arrow">→</span> <span class="to">photo.jpg</span><span class="tag">it's a JPEG</span></div>
+          </div>
+          <div class="chips"><span class="hot">Format JSON</span><span>Minify</span><span>Sort keys</span><span>Format XML</span><span class="hot">Optimize SVG</span><span class="hot">Check syntax</span><span>Data URI</span><span>Base64</span><span>SHA-256</span></div>
         </div>
         <div class="panel t-d reveal">
           <h3>Six skins, or your own</h3>
-          <p>Glass, Instrument, Tactical, Neon, Sunset and Porcelain, or write your own in a few lines of CSS. Pick Orbit or Bloom for a second ring of presets.</p>
+          <p>Glass, Instrument, Tactical, Neon, Sunset and Porcelain, or write your own in a few lines of CSS and share it as a link. Pick Orbit or Bloom for a second ring of presets.</p>
           <div class="skins-img"><img src="media/skins.png" alt="The wheel in six skins: Glass, Instrument, Tactical, Neon, Sunset and Porcelain" loading="lazy" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/gh/Suvraneel/radlet@main/docs/images/skins.png'"></div>
         </div>
         <div class="panel t-e reveal" style="--d: 1">
@@ -616,12 +744,107 @@ footer a:hover { color: var(--text); }
       <div class="specs">
         <p class="label reveal">Also on the wheel</p>
         <div class="spec reveal"><h3>Privacy check</h3><p>See the GPS, camera serial and hidden edits a file carries before you share it, then strip them.</p></div>
-        <div class="spec reveal" style="--d: 1"><h3>PDF toolkit</h3><p>Split, reorder, rotate, number pages, watermark, lock with a password, or make scans searchable.</p></div>
-        <div class="spec reveal"><h3>Audio and video</h3><p>Trim, make GIFs, save stills, even out the volume and make subtitles, with FFmpeg installed.</p></div>
+        <div class="spec reveal" style="--d: 1"><h3>PDF toolkit</h3><p>Split, reorder, number pages, watermark, lock with a password, black out text for real, or scan paper pages into one searchable PDF.</p></div>
+        <div class="spec reveal"><h3>Audio and video</h3><p>Trim, join clips, make GIFs, save stills, even out the volume, and make or burn in subtitles. If a job needs FFmpeg, Radlet gets it for you.</p></div>
         <div class="spec reveal" style="--d: 1"><h3>Never overwrites</h3><p>New files appear beside the originals under a free name. Every job can be undone from History.</p></div>
         <div class="spec reveal"><h3>Watch folders</h3><p>Files added to a folder are converted, compressed or run through a loadout as they arrive.</p></div>
-        <div class="spec reveal" style="--d: 1"><h3>Everyday</h3><p>Rename with a pattern, copy a path, open in Terminal, or share by AirDrop, Mail and Messages.</p></div>
+        <div class="spec reveal" style="--d: 1"><h3>Folders</h3><p>Zip, merge, flatten, sort by kind, list contents or find duplicates, always working on copies.</p></div>
+        <div class="spec reveal"><h3>Codes and icons</h3><p>Read QR codes and barcodes, make a QR code, or turn a picture into favicons, a Mac icon or an iOS app icon set.</p></div>
+        <div class="spec reveal" style="--d: 1"><h3>Everyday</h3><p>Rename with a pattern or by what's in each file, copy a path, open in Terminal, or share by AirDrop, Mail and Messages.</p></div>
       </div>
+    </div>
+  </section>
+
+  <!-- Formats -->
+  <section id="formats">
+    <div class="wrap">
+      <div class="head">
+        <p class="label reveal">Formats</p>
+        <h2 class="reveal" style="--d: 1">Whatever you drag, the wheel knows what it can become.</h2>
+        <p class="lead reveal" style="--d: 2; margin-top: 26px">Each kind of file gets its most useful formats up, right, down and left, and the rest under More. Most formats go both ways; a few only open, or only save.</p>
+        <p class="legend reveal" style="--d: 3"><span><span class="chip">PNG</span>opens and saves</span><span><span class="chip ro">RAW</span>opens only</span><span><span class="chip wo">ICNS</span>saves only</span></p>
+      </div>
+      <div class="fmt-grid">
+        <div class="panel fmt reveal">
+          <h3>Images</h3>
+          <p>Any picture also traces into an SVG. Animated GIF, WebP and PNG keep every frame.</p>
+          <div class="chips"><span>JPEG</span><span>PNG</span><span>HEIC</span><span>WebP</span><span>AVIF</span><span>JPEG XL</span><span>TIFF</span><span>GIF</span><span>SVG</span><span>BMP</span><span>ICO</span><span>TGA</span><span>QOI</span><span class="wo">ICNS</span><span class="ro">RAW</span><span class="ro">PSD</span><span class="ro">JPEG 2000</span></div>
+        </div>
+        <div class="panel fmt reveal" style="--d: 1">
+          <h3>PDF</h3>
+          <p>Into Word, text or one image per page, and back. Scanned pages are read with text recognition first.</p>
+          <div class="chips"><span>Word</span><span>Markdown</span><span>HTML</span><span>RTF</span><span>Text</span><span>JPEG</span><span>PNG</span><span>WebP</span><span>TIFF</span></div>
+        </div>
+        <div class="panel fmt reveal" style="--d: 2">
+          <h3>Documents</h3>
+          <p>Headings, lists, tables and links come through. Keynote and Pages files go through Apple's free apps.</p>
+          <div class="chips"><span>Word</span><span>Markdown</span><span>HTML</span><span>RTF</span><span>Text</span><span>EPUB</span><span>PowerPoint</span><span>Keynote</span><span class="ro">Pages</span><span class="ro">Word 97</span><span class="ro">ODT</span></div>
+        </div>
+        <div class="panel fmt reveal">
+          <h3>Spreadsheets and data</h3>
+          <p>Numbers stay numbers, and IDs keep their leading zeros. JSON goes to and from YAML, TOML and XML.</p>
+          <div class="chips"><span>Excel</span><span>CSV</span><span>TSV</span><span>JSON</span><span>YAML</span><span>TOML</span><span>XML</span><span class="ro">Numbers</span><span class="ro">XLS</span><span class="ro">ODS</span><span class="ro">SQLite</span></div>
+        </div>
+        <div class="panel fmt reveal" style="--d: 1">
+          <h3>Audio</h3>
+          <p>M4A, WAV and AIFF out of the box. The rest with FFmpeg, which Radlet installs when you first need it.</p>
+          <div class="chips"><span>MP3</span><span>M4A</span><span>WAV</span><span>AIFF</span><span>FLAC</span><span>OGG</span><span>Opus</span><span>WMA</span></div>
+        </div>
+        <div class="panel fmt reveal" style="--d: 2">
+          <h3>Video</h3>
+          <p>MP4 and MOV out of the box, without re-encoding when the codecs allow. The rest with FFmpeg.</p>
+          <div class="chips"><span>MP4</span><span>MOV</span><span>WebM</span><span>MKV</span><span>AVI</span><span>WMV</span><span>GIF</span></div>
+        </div>
+        <div class="panel fmt reveal">
+          <h3>Subtitles</h3>
+          <p>To each other or plain text, made from speech on your Mac, or burned into a video.</p>
+          <div class="chips"><span>SRT</span><span>WebVTT</span><span>ASS</span><span>SBV</span><span>TTML</span></div>
+        </div>
+        <div class="panel fmt reveal" style="--d: 1">
+          <h3>Fonts</h3>
+          <p>Desktop fonts into web fonts and back, or copied as a data URI for your CSS.</p>
+          <div class="chips"><span>TTF</span><span>OTF</span><span>WOFF2</span><span>WOFF</span></div>
+        </div>
+        <div class="panel fmt reveal" style="--d: 2">
+          <h3>Archives</h3>
+          <p>A folder becomes a ZIP and a ZIP a folder, locked ones too. Nothing is ever written outside it.</p>
+          <div class="chips"><span>ZIP</span><span>TAR.GZ</span><span class="ro">7z</span><span class="ro">RAR</span><span class="ro">ISO</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Privacy -->
+  <section id="privacy">
+    <div class="wrap">
+      <div class="head">
+        <p class="label reveal">Private by design</p>
+        <h2 class="reveal" style="--d: 1">Your files stay on your Mac.</h2>
+        <p class="lead reveal" style="--d: 2; margin-top: 26px">A converter in a browser tab has to take your file away to work on it. Radlet does the work where the file already is.</p>
+      </div>
+      <div class="vs">
+        <div class="panel side them reveal">
+          <h3>A converter website</h3>
+          <p class="how">upload → wait → download</p>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#no"/></svg>Your file goes to a server you don't control, and you trust it's deleted afterwards.</li>
+            <li><svg aria-hidden="true"><use href="#no"/></svg>Everything travels both ways, so a big video can take longer to move than to convert.</li>
+            <li><svg aria-hidden="true"><use href="#no"/></svg>Free tiers often cap file sizes or count conversions, then ask for an account.</li>
+            <li><svg aria-hidden="true"><use href="#no"/></svg>A batch means one tab per file, or a bigger plan.</li>
+          </ul>
+        </div>
+        <div class="shell reveal" style="--d: 1"><div class="core side us">
+          <h3>Radlet</h3>
+          <p class="how">drag → flick → done</p>
+          <ul>
+            <li><svg aria-hidden="true"><use href="#yes"/></svg>Files are read and written on this Mac and never sent anywhere.</li>
+            <li><svg aria-hidden="true"><use href="#yes"/></svg>Works offline, at your Mac's own speed, even on a plane.</li>
+            <li><svg aria-hidden="true"><use href="#yes"/></svg>No caps, no counter, no account and no watermark.</li>
+            <li><svg aria-hidden="true"><use href="#yes"/></svg>Drop a whole folder: each file runs on its own, and every job can be undone.</li>
+          </ul>
+        </div></div>
+      </div>
+      <p class="vs-note reveal">Radlet goes online for two things: checking for updates, and downloading FFmpeg if you say yes. It has no accounts or telemetry, and <a href="https://github.com/Suvraneel/radlet">the source is public</a>, so you can check.</p>
     </div>
   </section>
 
@@ -634,9 +857,10 @@ footer a:hover { color: var(--text); }
         <p class="lead reveal" style="--d: 2">Like a game loadout, but for files. Save any tool's settings as a loadout from its window, or chain steps in a small text file. Hold <kbd>Control</kbd> while dragging and they're on the wheel.</p>
         <ul class="notes reveal" style="--d: 3">
           <li>One decode and one encode per chain, so steps never compress twice.</li>
-          <li>Run them on watch folders: new files are handled as they arrive.</li>
-          <li>Passwords never go into a loadout.</li>
-          <li>Ready-made ones, and skins, are in the <a href="gallery/" style="color: var(--text); box-shadow: inset 0 -1px 0 var(--hair-2)">gallery</a>: one click opens them in Radlet.</li>
+          <li>Your shortcuts from the Shortcuts app can join the wheel too.</li>
+          <li>With Apple Intelligence, describe one in a sentence, like “under 2 MB, as PDF”, and review the steps it drafts.</li>
+          <li>Share loadouts and skins as a link or a file. Ready-made ones are in the <a href="gallery/" style="color: var(--text); box-shadow: inset 0 -1px 0 var(--hair-2)">gallery</a>: one click opens them in Radlet.</li>
+          <li>Run them on watch folders. Passwords never go into a loadout.</li>
         </ul>
       </div>
       <div class="code reveal" style="--d: 2">
@@ -668,6 +892,7 @@ footer a:hover { color: var(--text); }
 <span class="p">$</span> radlet convert *.heic --to jpg
 <span class="p">$</span> radlet compress photo.jpg --target 2MB
 <span class="p">$</span> radlet translate notes.md --to fr
+<span class="p">$</span> radlet check config.yaml data.json
 <span class="p">$</span> radlet loadout <span class="s">"Web-ready image"</span> *.png
 
 <span class="c"># let Claude and other AI apps use it, locally</span>
@@ -678,8 +903,9 @@ footer a:hover { color: var(--text); }
         <h2 class="reveal" style="--d: 1">From the terminal, or from Claude.</h2>
         <p class="lead reveal" style="--d: 2">Almost every tool on the wheel is a <code>radlet</code> command, ready for scripts and Shortcuts. <code>radlet mcp</code> lets Claude and other AI apps convert, compress and clean your files on your own Mac.</p>
         <ul class="notes reveal" style="--d: 3">
-          <li>JSON output for scripts with <code>--json</code>.</li>
-          <li>Password tools are never offered to agents.</li>
+          <li>JSON output for scripts with <code>--json</code>, and an exit code from <code>radlet check</code> for your CI.</li>
+          <li>Agents get the wheel's tools: convert, compress, combine, check syntax, describe, summarize, run loadouts and more.</li>
+          <li>Password tools and your own shortcuts are never offered to agents.</li>
         </ul>
       </div>
     </div>
@@ -695,7 +921,11 @@ footer a:hover { color: var(--text); }
       <div class="faq reveal" style="--d: 1">
         <details>
           <summary>Is Radlet free?<i class="pm" aria-hidden="true"></i></summary>
-          <div class="a"><p>Yes. Download it here or from <a href="https://github.com/Suvraneel/radlet/releases/latest">GitHub</a>. There's no account to make, no subscription and no ads.</p></div>
+          <div class="a"><p>Yes, with no limits. Download it here or from <a href="https://github.com/Suvraneel/radlet/releases/latest">GitHub</a>. There's no account to make, no subscription, no watermark and no ads.</p></div>
+        </details>
+        <details>
+          <summary>Is there a limit on how many files, or how big?<i class="pm" aria-hidden="true"></i></summary>
+          <div class="a"><p>No allowance and no counter: drop one file or a folder of thousands, as often as you like. Radlet only turns away files too big for any Mac to handle sensibly, such as pictures over 40,000 pixels a side, and says which file and why.</p></div>
         </details>
         <details>
           <summary>Does it upload my files anywhere?<i class="pm" aria-hidden="true"></i></summary>
@@ -703,15 +933,27 @@ footer a:hover { color: var(--text); }
         </details>
         <details>
           <summary>Can it convert HEIC photos to JPG?<i class="pm" aria-hidden="true"></i></summary>
-          <div class="a"><p>Yes: drag the photos, hold <kbd>Shift</kbd> and drop on JPEG. The JPEGs appear next to the originals. It also turns PDFs into images, Word documents into PDFs, CSV into Excel, MOV into MP4 (with FFmpeg installed) and a lot more.</p></div>
+          <div class="a"><p>Yes: drag the photos, hold <kbd>Shift</kbd> and drop on JPEG. The JPEGs appear next to the originals. It also turns PDFs into Word, logos into SVG drawings, Word documents into PDFs, CSV into Excel, MOV into MP4 and a lot more.</p></div>
+        </details>
+        <details>
+          <summary>Do I need to install FFmpeg?<i class="pm" aria-hidden="true"></i></summary>
+          <div class="a"><p>No. Everyday audio and video work out of the box: MP4 and MOV, sound to M4A, WAV or AIFF, trimming, joining and compressing. A few things need FFmpeg, such as MP3, WebM or MKV output and making GIFs. Those slots show a small badge, and choosing one offers to install it: with Homebrew if you have it, otherwise Radlet downloads its own build (about 55 MB) and checks it before use.</p></div>
+        </details>
+        <details>
+          <summary>Does it use Apple Intelligence?<i class="pm" aria-hidden="true"></i></summary>
+          <div class="a"><p>Where it helps, and only on your Mac. With Apple Intelligence, Radlet can describe a picture as alt text, summarize a document, name files by what's in them and draft a loadout from a sentence. Everything else works without it.</p></div>
         </details>
         <details>
           <summary>Which Macs does it run on?<i class="pm" aria-hidden="true"></i></summary>
-          <div class="a"><p>macOS 14 Sonoma or later, on Apple silicon and Intel. Translating documents needs macOS 26.</p></div>
+          <div class="a"><p>macOS 14 Sonoma or later, on Apple silicon and Intel. Translating documents needs macOS 26, and the Apple Intelligence tools need macOS 26 on Apple silicon.</p></div>
         </details>
         <details>
           <summary>Why does macOS warn me the first time I open it?<i class="pm" aria-hidden="true"></i></summary>
           <div class="a"><p>Radlet isn't notarized by Apple yet. On macOS 15 or later, open System Settings → Privacy &amp; Security and click Open Anyway. On macOS 14, Control-click Radlet in Applications and choose Open. You only do this once.</p></div>
+        </details>
+        <details>
+          <summary>Something's wrong, or missing. Where do I say?<i class="pm" aria-hidden="true"></i></summary>
+          <div class="a"><p><a href="https://github.com/Suvraneel/radlet/issues/new">Open an issue on GitHub</a> with what you tried and what happened, or the format or tool you'd like. If a job failed, Troubleshooting → Copy Diagnostics in the menu bar copies the details for your report, with no file names or paths.</p></div>
         </details>
       </div>
     </div>
@@ -738,10 +980,10 @@ footer a:hover { color: var(--text); }
       <p class="label reveal">Free for macOS 14 and later</p>
       <h2 class="reveal" style="--d: 1">Put every file tool on one wheel.</h2>
       <div class="cta reveal" style="--d: 2">
-        <a class="btn btn-primary" data-download href="https://github.com/Suvraneel/Radlet/releases/download/v0.1.0/Radlet-0.1.0.dmg">Download for Mac<span class="knob"><svg aria-hidden="true"><use href="#down"/></svg></span></a>
+        <a class="btn btn-primary" data-download href="https://github.com/Suvraneel/Radlet/releases/download/v0.4.0/Radlet-0.4.0.dmg">Download for Mac<span class="knob"><svg aria-hidden="true"><use href="#down"/></svg></span></a>
         <a class="arrow-link" href="https://github.com/Suvraneel/radlet">View the source<svg aria-hidden="true"><use href="#out"/></svg></a>
       </div>
-      <p class="meta mac-only reveal" style="--d: 3"><span>Version <span data-version>0.1.0</span></span><span data-size>25 MB</span><span>Apple silicon and Intel</span></p>
+      <p class="meta mac-only reveal" style="--d: 3"><span>Version <span data-version>0.4.0</span></span><span data-size>35 MB</span><span>Apple silicon and Intel</span><span>No limits</span></p>
     </div>
   </section>
 </main>
@@ -751,6 +993,9 @@ footer a:hover { color: var(--text); }
     <div class="left"><svg aria-hidden="true"><use href="#mark"/></svg><span>© 2026 Suvraneel Bhuin. Radlet is clean-room work: no code or assets from other apps.</span></div>
     <nav aria-label="Footer">
       <a href="https://github.com/Suvraneel/radlet/releases/latest">Releases</a>
+      <a href="gallery/">Gallery</a>
+      <a href="#privacy">Privacy</a>
+      <a href="https://github.com/Suvraneel/radlet/issues/new">Report a problem</a>
       <a href="https://github.com/Suvraneel/radlet">Source</a>
     </nav>
   </div></div>
@@ -762,17 +1007,17 @@ footer a:hover { color: var(--text); }
     <div class="mac">
       <span class="tick-badge" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5l3.5 3.5 7.5-8"/></svg></span>
       <h2 id="get-title">Your download has started</h2>
-      <p class="file"><span data-file>Radlet-0.1.0.dmg</span> · <span data-size>25 MB</span></p>
+      <p class="file"><span data-file>Radlet-0.4.0.dmg</span> · <span data-size>35 MB</span></p>
       <ol class="steps">
         <li><b>Open the disk image</b> and drag Radlet into Applications.</li>
         <li><b>Open Radlet.</b> macOS blocks it the first time, because it isn't notarized by Apple yet. Click Done.</li>
         <li><b>Allow it once.</b>
           <span class="os">macOS 15 or later: System Settings → Privacy &amp; Security → Open Anyway.</span>
           <span class="os">macOS 14: Control-click Radlet in Applications and choose Open.</span></li>
-        <li><b>Hold Shift while dragging files in Finder.</b> For audio and video, also install FFmpeg: <code>brew install ffmpeg</code></li>
+        <li><b>Hold Shift while dragging files in Finder.</b> Radlet lives in the menu bar, and offers FFmpeg the first time a job needs it.</li>
       </ol>
       <div class="foot">
-        <span>Didn't start? <a data-download href="https://github.com/Suvraneel/Radlet/releases/download/v0.1.0/Radlet-0.1.0.dmg">Download again</a></span>
+        <span>Didn't start? <a data-download href="https://github.com/Suvraneel/Radlet/releases/download/v0.4.0/Radlet-0.4.0.dmg">Download again</a></span>
         <a href="https://github.com/Suvraneel/radlet/releases/latest">ZIP, checksums and release notes</a>
       </div>
     </div>
@@ -781,7 +1026,7 @@ footer a:hover { color: var(--text); }
       <p>It runs on macOS 14 or later. Send this page to your Mac and download it there.</p>
       <button class="btn btn-primary" id="send">Send to my Mac<span class="knob"><svg aria-hidden="true"><use href="#out"/></svg></span></button>
       <div class="foot" style="margin-top: 26px">
-        <span>On a Mac already? <a data-download data-direct href="https://github.com/Suvraneel/Radlet/releases/download/v0.1.0/Radlet-0.1.0.dmg">Download anyway</a></span>
+        <span>On a Mac already? <a data-download data-direct href="https://github.com/Suvraneel/Radlet/releases/download/v0.4.0/Radlet-0.4.0.dmg">Download anyway</a></span>
       </div>
     </div>
   </div></div>
@@ -812,8 +1057,29 @@ footer a:hover { color: var(--text); }
   }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
+  // ---------- numbers count up the first time they're seen ----------
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const counters = document.querySelectorAll('[data-count]');
+  if (!still && counters.length) {
+    const count = (el) => {
+      const end = Number(el.dataset.count), t0 = performance.now(), ms = 1600;
+      const step = (now) => {
+        const p = Math.min(1, (now - t0) / ms);
+        el.textContent = String(Math.round(end * (1 - Math.pow(2, -10 * p))));
+        if (p < 1) requestAnimationFrame(step); else el.textContent = String(end);
+      };
+      requestAnimationFrame(step);
+    };
+    // Starts with the strip's fade-in, so the jump to 0 isn't seen; until
+    // then the real numbers stay in the page for anything that doesn't scroll.
+    const co = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { count(e.target); co.unobserve(e.target); } });
+    }, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
+    counters.forEach(el => co.observe(el));
+  }
+
   // ---------- download ----------
-  // The links point at v0.1.0's disk image, so they work without JavaScript.
+  // The links point at v0.4.0's disk image, so they work without JavaScript.
   // When the page loads it asks GitHub for the newest release and points
   // them there instead, so a new tag needs no change here.
   const phone = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
